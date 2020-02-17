@@ -50,6 +50,8 @@ if [ $SEQ2 -le 0 ];then
   SEQ2=1
 fi
 
+
+
 # seq $SEQ1 $SEQ1 $SECLESS  | while read a; 
 # does some crazy shit with not using the trailing zeroes or numbers in general...
 # echoing works, calling ffmpeg doesnt and "-x" shows it beeing called wrong
@@ -95,7 +97,17 @@ while [[ $j -lt $SECLESS ]]; do
   if [[ $co2 -eq 0 ]]; then
     CVSTRING="${CVSTRING} ( "
   fi 
-  OF=$( printf "$D/tn-%04d.tif" $j )
+  S2=$j
+  H=0
+  M=0
+  S=0
+  H=$(( $S2 / 3600 ))
+  S2=$(( $S2 - ($H * 3600 ) ))
+  M=$(( $S2 / 60 ))
+  S2=$(( $S2 - ($M * 60 ) ))
+  S=$(( $S2 ))
+  LAB=$( printf "%02d:%02d:%02d" $H $M $S )
+  OF=$( printf " ( ( -background '#00000080' -fill white -font '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf' label:%s ) -gravity southeast $D/tn-%04d.tif +swap -composite ) " $LAB $j )
   CVSTRING="${CVSTRING} $OF"
   j=$(( $j + $SEQ2 ))
   co2=$(( $co2 + 1 ))
