@@ -107,7 +107,7 @@ while [[ $j -lt $SECLESS ]]; do
   S2=$(( $S2 - ($M * 60 ) ))
   S=$(( $S2 ))
   LAB=$( printf "%02d:%02d:%02d" $H $M $S )
-  OF=$( printf " ( ( -background '#00000080' -fill white -font '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf' label:%s ) -gravity southeast $D/tn-%04d.tif +swap -composite ) " $LAB $j )
+  OF=$( printf " ( ( -background #00000080 -fill white -font '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf' label:%s ) -gravity southeast $D/tn-%04d.tif +swap -composite ) " $LAB $j )
   CVSTRING="${CVSTRING} $OF"
   j=$(( $j + $SEQ2 ))
   co2=$(( $co2 + 1 ))
