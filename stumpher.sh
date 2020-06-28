@@ -13,8 +13,9 @@ if [ -s $OUT ]; then
 fi
 
 UU=$SRC
+#streams_stream_0_coded_widthstreams_stream_0_coded_width
 
-ffprobe -print_format flat=sep_char=_ -show_format -loglevel quiet "$UU" > "$NFO"
+ffprobe -print_format flat=sep_char=_ -show_format -show_streams -loglevel quiet "$UU" > "$NFO"
 . $NFO
 
 #LENGTH=$(cat $NFO | grep "^  Duration:" | head -c 1)
@@ -35,20 +36,20 @@ FF="ffmpeg -loglevel quiet"
 #format.probe_score=100
 #format.tags.encoder="libebml v1.3.0 + libmatroska v1.4.1"
 #format.tags.creation_time="2014-04-04 19:54:26"
+#streams_stream_0_coded_width
 
 # get 2 fullres images
 
 SEC=${format_duration%\.*}
-SECLESS=$(( $SEC - 1 ))
+SECLESS=$(( $SEC  - 1 ))
 SEQ1=$(( $SEC / 3 ))
-SEQ2=$(( $SEC / 32 ))
+
+WIDTH=${streams_stream_0_coded_width}
+
 if [ $SEQ1 -le 0 ];then
   SEQ1=1
 fi
 
-if [ $SEQ2 -le 0 ];then
-  SEQ2=1
-fi
 
 
 
@@ -57,18 +58,34 @@ fi
 # echoing works, calling ffmpeg doesnt and "-x" shows it beeing called wrong
 # looping in shell. This saves an IPC and does something else
 
+
+besides=$(( $WIDTH / 300 ))
+S2=$(( 32 / $besides ))
+S2=$(( $S2 * $besides ))
+S2=$(( $SEC / $S2 ))
+
+SEQ2=$S2
+if [ $SEQ2 -le 0 ];then
+  SEQ2=1
+fi
+
 j=$SEQ1
-while [[ $j -lt $SECLESS ]]; do
-  OF=$( printf "$D/fullres-%04d.tif" $j )
+while [[ $j -le $SECLESS ]]; do
+  OFN=$( printf "fullres-%04d.tif" $j )
+  OF="${D}/$OFN"
+  OUT2=$( printf "$OUT-%04d.jpg" $j )
   ${FF} -ss "${j}" -i "$UU" -frames:v 1 $OF 
+  convert "$OF" -resize '1920x>' "$OUT2"
   j=$(( $j + $SEQ1 ))
   echo $OF
 done
 
+
+
 j=$SEQ2
 while [[ $j -lt $SECLESS ]]; do
   OF=$( printf "$D/tn-%04d.tif" $j )
-  ${FF} -ss "${j}" -i "$UU" -frames:v 1 -vf scale=iw/4:ih/4 $OF 
+  ${FF} -ss "${j}" -i "$UU" -frames:v 1 -vf scale=iw/$besides:ih/$besides $OF 
   j=$(( $j + $SEQ2 ))
   echo $OF
 done
@@ -111,7 +128,7 @@ while [[ $j -lt $SECLESS ]]; do
   CVSTRING="${CVSTRING} $OF"
   j=$(( $j + $SEQ2 ))
   co2=$(( $co2 + 1 ))
-  if [[ $co2 -eq 4 ]]; then
+  if [[ $co2 -ge $besides ]]; then
     CVSTRING="${CVSTRING} +append ) -append"
     co2=0
   fi 
