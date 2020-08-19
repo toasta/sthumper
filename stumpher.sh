@@ -44,7 +44,8 @@ FF="ffmpeg -loglevel quiet"
 
 SEC=${format_duration%\.*}
 SECLESS=$(( $SEC  - 1 ))
-SEQ1=$(( $SEC / 3 ))
+SEQ1_DIV=4
+SEQ1=$(( $SEC / $SEQ1_DIV ))
 
 WIDTH=${streams_stream_0_coded_width}
 
@@ -72,6 +73,7 @@ if [ $SEQ2 -le 0 ];then
   SEQ2=1
 fi
 
+
 j=$SEQ1
 while [[ $j -le $SECLESS ]]; do
   OFN=$( printf "fullres-%04d.tif" $j )
@@ -88,7 +90,8 @@ done
 j=$SEQ2
 while [[ $j -lt $SECLESS ]]; do
   OF=$( printf "$D/tn-%04d.tif" $j )
-  ${FF} -ss "${j}" -i "$UU" -frames:v 1 -vf scale=iw/$besides:ih/$besides $OF 
+  ${FF} -noaccurate_seek -ss "${j}" -i "$UU" -frames:v 1 \
+	-vf scale=iw/$besides:ih/$besides $OF 
   j=$(( $j + $SEQ2 ))
   echo $OF
 done
@@ -104,10 +107,14 @@ wait
 CVSTRING="convert "
 
 j=$SEQ1
-while [[ $j -lt $SECLESS ]]; do
-  OF=$( printf "$D/fullres-%04d.tif" $j )
+co=0
+while [[ $j -le $SECLESS ]]; do
+  if [[ $(( $co % 2 )) -eq 0 ]]; then
+	  OF=$( printf "$D/fullres-%04d.tif" $j )
+  	CVSTRING="${CVSTRING} $OF"
+	fi
+  co=$(( $co + 1 ))
   j=$(( $j + $SEQ1 ))
-  CVSTRING="${CVSTRING} $OF"
 done
 CVSTRING="${CVSTRING} -append"
 
