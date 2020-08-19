@@ -12,6 +12,8 @@ if [ -s $OUT ]; then
   exit 1
 fi
 
+TILE_MIN_WIDTH=384
+
 UU=$SRC
 #streams_stream_0_coded_widthstreams_stream_0_coded_width
 
@@ -53,13 +55,14 @@ fi
 
 
 
+
 # seq $SEQ1 $SEQ1 $SECLESS  | while read a; 
 # does some crazy shit with not using the trailing zeroes or numbers in general...
 # echoing works, calling ffmpeg doesnt and "-x" shows it beeing called wrong
 # looping in shell. This saves an IPC and does something else
 
 
-besides=$(( $WIDTH / 300 ))
+besides=$(( $WIDTH / $TILE_MIN_WIDTH ))
 S2=$(( 32 / $besides ))
 S2=$(( $S2 * $besides ))
 S2=$(( $SEC / $S2 ))
@@ -74,7 +77,7 @@ while [[ $j -le $SECLESS ]]; do
   OFN=$( printf "fullres-%04d.tif" $j )
   OF="${D}/$OFN"
   OUT2=$( printf "$OUT-%04d.jpg" $j )
-  ${FF} -ss "${j}" -i "$UU" -frames:v 1 $OF 
+  ${FF} -noaccurate_seek -ss "${j}" -i "$UU" -frames:v 1 $OF 
   convert "$OF" -resize '1920x>' "$OUT2"
   j=$(( $j + $SEQ1 ))
   echo $OF
@@ -136,7 +139,7 @@ done
 if [[ $co2 -gt 0 ]]; then
     CVSTRING="${CVSTRING} +append ) -append"
 fi
-CVSTRING="$CVSTRING $OUT"
+CVSTRING="$CVSTRING -quality 90 $OUT"
 
 $CVSTRING
 
