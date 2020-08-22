@@ -43,7 +43,7 @@ FF="ffmpeg -loglevel quiet"
 # get 2 fullres images
 
 SEC=${format_duration%\.*}
-SECLESS=$(( $SEC  - 1 ))
+SECLESS=$(( $SEC  - 10 ))
 SEQ1_DIV=4
 SEQ1=$(( $SEC / $SEQ1_DIV ))
 
