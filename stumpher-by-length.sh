@@ -62,45 +62,52 @@ CVSTRING="${CVSTRING} -append"
 
 
 
-i=10
 INC=60
 
 # how many images if one per minute?
-INC=$(( ($SECONDS-$i) / 60 ))
+INC=$(( ($SECONDS) / 60 ))
+echo "images if one per 60s $INC"
+
+# advance one as we dont start at 0
+INC=$(( $INC + 2 ))
 # round this up to next multiple of $besides
 INC=$(( $INC + ($INC % $besides) ))
+echo "rounding up to fit besides $besides"
 
 INC=$(( $SECONDS / $INC ))
 
+echo "resulting seconds advance $INC"
 
 co=0
+i=$INC
+
 while [[ $i -lt $SECONDS ]]; do
 
-if [[ $co -eq 0 ]]; then
-	echo
-	CVSTRING="${CVSTRING} ("
-fi
-  co=$(( $co + 1 ))
-  OF=$( printf "$D/tn-%04d.tif" $i )
-  ${FF} -noaccurate_seek -ss "${i}" -i "$UU" -frames:v 1 \
-	-vf scale=iw/$besides:ih/$besides $OF 
-  S2=$i
-  H=0
-  M=0
-  S=0
-  H=$(( $S2 / 3600 ))
-  S2=$(( $S2 - ($H * 3600 ) ))
-  M=$(( $S2 / 60 ))
-  S2=$(( $S2 - ($M * 60 ) ))
-  S=$(( $S2 ))
-  LAB=$( printf "%02d:%02d:%02d" $H $M $S )
-  OF=$( printf " ( ( -background #00000080 -fill white -font /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf label:%s ) -gravity southeast %s +swap -composite ) " $LAB $OF )
-  CVSTRING="${CVSTRING} $OF"
-  i=$(( $i + $INC ))
-  if [[ $co -ge $besides ]]; then
-  	CVSTRING="${CVSTRING} +append ) -append"
-	co=0
-  fi
+	if [[ $co -eq 0 ]]; then
+		echo
+		CVSTRING="${CVSTRING} ("
+	fi
+	  co=$(( $co + 1 ))
+	  OF=$( printf "$D/tn-%04d.tif" $i )
+	  ${FF} -noaccurate_seek -ss "${i}" -i "$UU" -frames:v 1 \
+		-vf scale=iw/$besides:ih/$besides $OF 
+	  S2=$i
+	  H=0
+	  M=0
+	  S=0
+	  H=$(( $S2 / 3600 ))
+	  S2=$(( $S2 - ($H * 3600 ) ))
+	  M=$(( $S2 / 60 ))
+	  S2=$(( $S2 - ($M * 60 ) ))
+	  S=$(( $S2 ))
+	  LAB=$( printf "%02d:%02d:%02d" $H $M $S )
+	  OF=$( printf " ( ( -background #00000080 -fill white -font /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf label:%s ) -gravity southeast %s +swap -composite ) " $LAB $OF )
+	  CVSTRING="${CVSTRING} $OF"
+	  i=$(( $i + $INC ))
+	  if [[ $co -ge $besides ]]; then
+		CVSTRING="${CVSTRING} +append ) -append"
+		co=0
+	  fi
 done
 if [[ $co -gt 0 ]]; then
 	CVSTRING="${CVSTRING} +append ) -append"
