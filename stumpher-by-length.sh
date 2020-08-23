@@ -1,6 +1,7 @@
 #! /bin/bash
 
-set -euxo pipefail
+#set -euxo pipefail
+set -x
 
 D=$(mktemp -d)
 SRC=$1
@@ -20,7 +21,7 @@ ffprobe -print_format flat=sep_char=_ -show_format -show_streams -loglevel quiet
 . $NFO
 
 FF="echo ffmpeg -loglevel quiet"
-FF="ffmpeg -loglevel quiet"
+#FF="ffmpeg -loglevel quiet"
 
 
 SECONDS=$(( ${format_duration%\.*} - 10 ))
@@ -47,9 +48,9 @@ fi
 i=$INC
 co=0
 while [[ $i -le $SECONDS ]]; do
-  OFN=$( printf "fullres-%04d.tif" $i )
+  OFN=$( printf "fullres-%06d.tif" $i )
   OF="${D}/$OFN"
-  OUT2=$( printf "$OUT-%04d.jpg" $i )
+  OUT2=$( printf "$OUT-%06d.jpg" $i )
   ${FF} -noaccurate_seek -ss "${i}" -i "$UU" -frames:v 1 $OF 
   convert "$OF" -quality 50% "$OUT2"
   i=$(( $i + $INC ))
@@ -67,6 +68,11 @@ INC=60
 # how many images if one per minute?
 INC=$(( ($SECONDS) / 60 ))
 echo "images if one per 60s $INC"
+
+while [[ $INC -ge 50 ]]; do
+       INC=$(( $INC / 2 ))
+done
+
 
 # advance one as we dont start at 0
 INC=$(( $INC + 2 ))
@@ -88,7 +94,7 @@ while [[ $i -lt $SECONDS ]]; do
 		CVSTRING="${CVSTRING} ("
 	fi
 	  co=$(( $co + 1 ))
-	  OF=$( printf "$D/tn-%04d.tif" $i )
+	  OF=$( printf "$D/tn-%06d.tif" $i )
 	  ${FF} -noaccurate_seek -ss "${i}" -i "$UU" -frames:v 1 \
 		-vf scale=iw/$besides:ih/$besides $OF 
 	  S2=$i
