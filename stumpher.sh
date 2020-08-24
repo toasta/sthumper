@@ -1,6 +1,8 @@
 #! /bin/bash
 
-set -euxo pipefail
+#set -euxo pipefail
+#set -euo pipefail
+#set -x
 
 D=$(mktemp -d)
 SRC=$1
@@ -12,142 +14,129 @@ if [ -s $OUT ]; then
   exit 1
 fi
 
-TILE_MIN_WIDTH=384
+TILE_MIN_WIDTH=300
 
 UU=$SRC
-#streams_stream_0_coded_widthstreams_stream_0_coded_width
 
 ffprobe -print_format flat=sep_char=_ -show_format -show_streams -loglevel quiet "$UU" > "$NFO"
 . $NFO
 
-#LENGTH=$(cat $NFO | grep "^  Duration:" | head -c 1)
-
 FF="echo ffmpeg -loglevel quiet"
 FF="ffmpeg -loglevel quiet"
+#FF="ffmpeg "
 
 
-#format.filename="this-is-not-the-file-you-are-looking-for"
-#format.nb_streams=3
-#format.nb_programs=0
-#format.format_name="matroska,webm"
-#format.format_long_name="Matroska / WebM"
-#format.start_time="0.000000"
-#format.duration="5559.054000"
-#format.size="10276400944"
-#format.bit_rate="14788704"
-#format.probe_score=100
-#format.tags.encoder="libebml v1.3.0 + libmatroska v1.4.1"
-#format.tags.creation_time="2014-04-04 19:54:26"
-#streams_stream_0_coded_width
+LEN_SECONDS=$(( ${format_duration%\.*} - 0 ))
+NUM_FULLRES=4
 
-# get 2 fullres images
+WIDTH=${streams_stream_0_coded_width:=0}
 
-SEC=${format_duration%\.*}
-SECLESS=$(( $SEC  - 10 ))
-SEQ1_DIV=4
-SEQ1=$(( $SEC / $SEQ1_DIV ))
-
-WIDTH=${streams_stream_0_coded_width}
-
-if [ $SEQ1 -le 0 ];then
-  SEQ1=1
+if [[ $WIDTH -eq 0 ]]; then
+	WIDTH=${streams_stream_1_coded_width}
 fi
 
-
-
-
-
-# seq $SEQ1 $SEQ1 $SECLESS  | while read a; 
-# does some crazy shit with not using the trailing zeroes or numbers in general...
-# echoing works, calling ffmpeg doesnt and "-x" shows it beeing called wrong
-# looping in shell. This saves an IPC and does something else
-
-
+# this is int() => floor()
 besides=$(( $WIDTH / $TILE_MIN_WIDTH ))
-S2=$(( 32 / $besides ))
-S2=$(( $S2 * $besides ))
-S2=$(( $SEC / $S2 ))
+TILE_SIZE=$(( $WIDTH / $besides ))
 
-SEQ2=$S2
-if [ $SEQ2 -le 0 ];then
-  SEQ2=1
-fi
-
-
-j=$SEQ1
-while [[ $j -le $SECLESS ]]; do
-  OFN=$( printf "fullres-%04d.tif" $j )
-  OF="${D}/$OFN"
-  OUT2=$( printf "$OUT-%04d.jpg" $j )
-  ${FF} -noaccurate_seek -ss "${j}" -i "$UU" -frames:v 1 $OF 
-  convert "$OF" -resize '1920x>' "$OUT2"
-  j=$(( $j + $SEQ1 ))
-  echo $OF
-done
-
-
-
-j=$SEQ2
-while [[ $j -lt $SECLESS ]]; do
-  OF=$( printf "$D/tn-%04d.tif" $j )
-  ${FF} -noaccurate_seek -ss "${j}" -i "$UU" -frames:v 1 \
-	-vf scale=iw/$besides:ih/$besides $OF 
-  j=$(( $j + $SEQ2 ))
-  echo $OF
-done
-
-wait
-
-
-# This is intentionally two loops; one could parallelize the thumbnail generation
-# don't do this for non-fs-files (i.e. http(s):// sources; the seeking is terrible
-# as it need to download several chunks to figure out the right byteoffset
-# and it's doing that for each thumbnail
-########################
 CVSTRING="convert "
 
-j=$SEQ1
+
+INC=$(( $LEN_SECONDS / $NUM_FULLRES ))
+if [[ $INC -le 0 ]]; then
+	INC=1
+fi
+
+i=$INC
 co=0
-while [[ $j -le $SECLESS ]]; do
-  if [[ $(( $co % 2 )) -eq 0 ]]; then
-	  OF=$( printf "$D/fullres-%04d.tif" $j )
-  	CVSTRING="${CVSTRING} $OF"
-	fi
-  co=$(( $co + 1 ))
-  j=$(( $j + $SEQ1 ))
+while [[ $i -le $LEN_SECONDS ]]; do
+  OFN=$( printf "fullres-%06d.tif" $i )
+  OF="${D}/$OFN"
+  OUT2=$( printf "$OUT-%06d.jpg" $i )
+  ${FF} -noaccurate_seek -ss "${i}" -i "$UU" -frames:v 1 $OF 
+  convert "$OF" "$OUT2"
+  i=$(( $i + $INC ))
+  if [[ $(( ($co % 2) )) -eq 0 ]]; then
+	  CVSTRING="${CVSTRING} $OF"
+  fi
+	co=$(( $co + 1 ))
 done
 CVSTRING="${CVSTRING} -append"
 
-co2=0
-j=$SEQ2
-while [[ $j -lt $SECLESS ]]; do
-  if [[ $co2 -eq 0 ]]; then
-    CVSTRING="${CVSTRING} ( "
-  fi 
-  S2=$j
-  H=0
-  M=0
-  S=0
-  H=$(( $S2 / 3600 ))
-  S2=$(( $S2 - ($H * 3600 ) ))
-  M=$(( $S2 / 60 ))
-  S2=$(( $S2 - ($M * 60 ) ))
-  S=$(( $S2 ))
-  LAB=$( printf "%02d:%02d:%02d" $H $M $S )
-  OF=$( printf " ( ( -background #00000080 -fill white -font /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf label:%s ) -gravity southeast $D/tn-%04d.tif +swap -composite ) " $LAB $j )
-  CVSTRING="${CVSTRING} $OF"
-  j=$(( $j + $SEQ2 ))
-  co2=$(( $co2 + 1 ))
-  if [[ $co2 -ge $besides ]]; then
-    CVSTRING="${CVSTRING} +append ) -append"
-    co2=0
-  fi 
+
+
+INC=60
+
+# how many images if one per minute?
+INC=$(( ($LEN_SECONDS) / 60 ))
+echo "images if one per 60s $INC"
+
+while [[ $INC -ge 100 ]]; do
+       INC=$(( $INC / 2 ))
 done
-if [[ $co2 -gt 0 ]]; then
-    CVSTRING="${CVSTRING} +append ) -append"
-fi
-CVSTRING="$CVSTRING -quality 90 $OUT"
+
+
+# round this up to next multiple of $besides
+
+#echo "rounding up to fit besides $besides ==== $INC + $INC % $besides"
+echo "rounding up to besides $besides $INC"
+INC=$(( $INC / $besides ))
+
+INC=$(( $INC + 1 ))
+
+INC=$(( $INC * $besides ))
+echo "rounding to besides $besides $INC"
+
+NUM=$INC
+
+#exit
+
+co=0
+j=0
+
+while [[ $j -lt $NUM ]]; do
+  echo -n " $(( 100 * $j / $NUM ))%"
+
+	if [ $(($j % $besides)) -eq 0 ]; then
+		CVSTRING="${CVSTRING} ("
+	fi
+    sec=$(( ($LEN_SECONDS / $NUM) * $j ))
+	  co=$(( $co + 1 ))
+	  OF=$( printf "$D/tn-%06d.tif" $sec )
+	  ${FF} -noaccurate_seek -ss "${sec}" -i "$UU" -frames:v 1 \
+		-vf scale=iw/$besides:ih/$besides $OF 
+	  S2=$sec
+	  H=0
+	  M=0
+	  S=0
+	  H=$(( $S2 / 3600 ))
+	  S2=$(( $S2 - ($H * 3600 ) ))
+	  M=$(( $S2 / 60 ))
+	  S2=$(( $S2 - ($M * 60 ) ))
+	  S=$(( $S2 ))
+	  LAB=$( printf "%02d:%02d:%02d" $H $M $S )
+	  OF=$( printf " ( ( -background #00000080 -fill white -font /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf label:%s ) -gravity southeast %s +swap -composite ) " $LAB $OF )
+	  CVSTRING="${CVSTRING} $OF"
+	  j=$(( $j + 1 ))
+	  if [[ $(($j % $besides)) -eq 0 ]]; then
+		CVSTRING="${CVSTRING} +append ) -append"
+	  fi
+done
+#CVSTRING="${CVSTRING} +append ) -append"
+#CVSTRING="${CVSTRING} +append ) -append"
+# if [[ $co -gt 0 ]]; then
+# 	CVSTRING="${CVSTRING} +append ) -append"
+# 	co=0
+# fi
+
+#if [[ $co -gt 0 ]]; then
+	#CVSTRING="$CVSTRING +append ) -append"
+
+#fi
+
+
+CVSTRING="$CVSTRING $OUT"
 
 $CVSTRING
 
-rm -vr "$D"
+rm -r "$D"
