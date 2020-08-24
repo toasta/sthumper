@@ -1,7 +1,8 @@
 #! /bin/bash
 
 #set -euxo pipefail
-set -x
+#set -euo pipefail
+#set -x
 
 D=$(mktemp -d)
 SRC=$1
@@ -21,10 +22,11 @@ ffprobe -print_format flat=sep_char=_ -show_format -show_streams -loglevel quiet
 . $NFO
 
 FF="echo ffmpeg -loglevel quiet"
-#FF="ffmpeg -loglevel quiet"
+FF="ffmpeg -loglevel quiet"
+#FF="ffmpeg "
 
 
-SECONDS=$(( ${format_duration%\.*} - 10 ))
+LEN_SECONDS=$(( ${format_duration%\.*} - 0 ))
 NUM_FULLRES=4
 
 WIDTH=${streams_stream_0_coded_width:=0}
@@ -40,19 +42,19 @@ TILE_SIZE=$(( $WIDTH / $besides ))
 CVSTRING="convert "
 
 
-INC=$(( $SECONDS / $NUM_FULLRES ))
+INC=$(( $LEN_SECONDS / $NUM_FULLRES ))
 if [[ $INC -le 0 ]]; then
 	INC=1
 fi
 
 i=$INC
 co=0
-while [[ $i -le $SECONDS ]]; do
+while [[ $i -le $LEN_SECONDS ]]; do
   OFN=$( printf "fullres-%06d.tif" $i )
   OF="${D}/$OFN"
   OUT2=$( printf "$OUT-%06d.jpg" $i )
   ${FF} -noaccurate_seek -ss "${i}" -i "$UU" -frames:v 1 $OF 
-  convert "$OF" -quality 50% "$OUT2"
+  convert "$OF" "$OUT2"
   i=$(( $i + $INC ))
   if [[ $(( ($co % 2) )) -eq 0 ]]; then
 	  CVSTRING="${CVSTRING} $OF"
@@ -66,38 +68,44 @@ CVSTRING="${CVSTRING} -append"
 INC=60
 
 # how many images if one per minute?
-INC=$(( ($SECONDS) / 60 ))
+INC=$(( ($LEN_SECONDS) / 60 ))
 echo "images if one per 60s $INC"
 
-while [[ $INC -ge 50 ]]; do
+while [[ $INC -ge 100 ]]; do
        INC=$(( $INC / 2 ))
 done
 
 
-# advance one as we dont start at 0
-INC=$(( $INC + 2 ))
 # round this up to next multiple of $besides
-INC=$(( $INC + ($INC % $besides) ))
-echo "rounding up to fit besides $besides"
 
-INC=$(( $SECONDS / $INC ))
+#echo "rounding up to fit besides $besides ==== $INC + $INC % $besides"
+echo "rounding up to besides $besides $INC"
+INC=$(( $INC / $besides ))
 
-echo "resulting seconds advance $INC"
+INC=$(( $INC + 1 ))
+
+INC=$(( $INC * $besides ))
+echo "rounding to besides $besides $INC"
+
+NUM=$INC
+
+#exit
 
 co=0
-i=$INC
+j=0
 
-while [[ $i -lt $SECONDS ]]; do
+while [[ $j -lt $NUM ]]; do
 
-	if [[ $co -eq 0 ]]; then
+	if [ $(($j % $besides)) -eq 0 ]; then
 		echo
 		CVSTRING="${CVSTRING} ("
 	fi
+    sec=$(( ($LEN_SECONDS / $NUM) * $j ))
 	  co=$(( $co + 1 ))
-	  OF=$( printf "$D/tn-%06d.tif" $i )
-	  ${FF} -noaccurate_seek -ss "${i}" -i "$UU" -frames:v 1 \
+	  OF=$( printf "$D/tn-%06d.tif" $sec )
+	  ${FF} -noaccurate_seek -ss "${sec}" -i "$UU" -frames:v 1 \
 		-vf scale=iw/$besides:ih/$besides $OF 
-	  S2=$i
+	  S2=$sec
 	  H=0
 	  M=0
 	  S=0
@@ -109,16 +117,17 @@ while [[ $i -lt $SECONDS ]]; do
 	  LAB=$( printf "%02d:%02d:%02d" $H $M $S )
 	  OF=$( printf " ( ( -background #00000080 -fill white -font /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf label:%s ) -gravity southeast %s +swap -composite ) " $LAB $OF )
 	  CVSTRING="${CVSTRING} $OF"
-	  i=$(( $i + $INC ))
-	  if [[ $co -ge $besides ]]; then
+	  j=$(( $j + 1 ))
+	  if [[ $(($j % $besides)) -eq 0 ]]; then
 		CVSTRING="${CVSTRING} +append ) -append"
-		co=0
 	  fi
 done
-if [[ $co -gt 0 ]]; then
-	CVSTRING="${CVSTRING} +append ) -append"
-	co=0
-fi
+#CVSTRING="${CVSTRING} +append ) -append"
+#CVSTRING="${CVSTRING} +append ) -append"
+# if [[ $co -gt 0 ]]; then
+# 	CVSTRING="${CVSTRING} +append ) -append"
+# 	co=0
+# fi
 
 #if [[ $co -gt 0 ]]; then
 	#CVSTRING="$CVSTRING +append ) -append"
@@ -126,7 +135,7 @@ fi
 #fi
 
 
-CVSTRING="$CVSTRING -quality 50% $OUT"
+CVSTRING="$CVSTRING $OUT"
 
 $CVSTRING
 
