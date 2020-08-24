@@ -95,9 +95,9 @@ co=0
 j=0
 
 while [[ $j -lt $NUM ]]; do
+  echo -n " $(( 100 * $j / $NUM ))%"
 
 	if [ $(($j % $besides)) -eq 0 ]; then
-		echo
 		CVSTRING="${CVSTRING} ("
 	fi
     sec=$(( ($LEN_SECONDS / $NUM) * $j ))
@@ -139,4 +139,4 @@ CVSTRING="$CVSTRING $OUT"
 
 $CVSTRING
 
-rm -vr "$D"
+rm -r "$D"
