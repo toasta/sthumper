@@ -100,10 +100,12 @@ while [[ $j -lt $NUM ]]; do
 	if [ $(($j % $besides)) -eq 0 ]; then
 		CVSTRING="${CVSTRING} ("
 	fi
+    # if the video is less than say 6 seconds for 6 besides, this needs
+    # to overwrite the image
     sec=$(( ($LEN_SECONDS / $NUM) * $j ))
 	  co=$(( $co + 1 ))
 	  OF=$( printf "$D/tn-%06d.tif" $sec )
-	  ${FF} -noaccurate_seek -ss "${sec}" -i "$UU" -frames:v 1 \
+	  ${FF} -noaccurate_seek -n -ss "${sec}" -i "$UU" -frames:v 1 \
 		-vf scale=iw/$besides:ih/$besides $OF 
 	  S2=$sec
 	  H=0
