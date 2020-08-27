@@ -39,6 +39,9 @@ fi
 besides=$(( $WIDTH / $TILE_MIN_WIDTH ))
 TILE_SIZE=$(( $WIDTH / $besides ))
 
+
+echo "$SRC is ${LEN_SECONDS}s long and $WIDTH wide; resulting tilesize $TILE_SIZE"
+
 CVSTRING="convert "
 
 
@@ -72,6 +75,7 @@ INC=$(( ($LEN_SECONDS) / 60 ))
 echo "images if one per 60s $INC"
 
 while [[ $INC -ge 100 ]]; do
+      echo "halfing to get below 100"
        INC=$(( $INC / 2 ))
 done
 
@@ -79,13 +83,13 @@ done
 # round this up to next multiple of $besides
 
 #echo "rounding up to fit besides $besides ==== $INC + $INC % $besides"
-echo "rounding up to besides $besides $INC"
+echo "wanna do $INC frames"
 INC=$(( $INC / $besides ))
 
 INC=$(( $INC + 1 ))
 
 INC=$(( $INC * $besides ))
-echo "rounding to besides $besides $INC"
+echo "rounding to next higher multiple of $besides => $INC"
 
 NUM=$INC
 
@@ -124,6 +128,7 @@ while [[ $j -lt $NUM ]]; do
 		CVSTRING="${CVSTRING} +append ) -append"
 	  fi
 done
+echo
 #CVSTRING="${CVSTRING} +append ) -append"
 #CVSTRING="${CVSTRING} +append ) -append"
 # if [[ $co -gt 0 ]]; then
