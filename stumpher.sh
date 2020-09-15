@@ -110,9 +110,9 @@ while [[ $j -lt $NUM ]]; do
 
 	if [ $(($j % $besides)) -eq 0 ]; then
 		CVSTRING="${CVSTRING} ("
-	  if [ $(($j % ($besides*2))) -eq 0 ]; then
-      CVSTRING_HALF="$CVSTRING_HALF ("
-    fi
+	  if [ $(($j2 % 2)) -eq 0 ]; then
+            CVSTRING_HALF="$CVSTRING_HALF ("
+        fi
 	fi
     # if the video is less than say 6 seconds for 6 besides, this needs
     # to overwrite the image
@@ -145,7 +145,7 @@ while [[ $j -lt $NUM ]]; do
 	  j=$(( $j + 1 ))
 	  if [[ $(($j % $besides)) -eq 0 ]]; then
 		  CVSTRING="${CVSTRING} +append ) -append"
-      if [[ $(($j % ($besides*2))) -eq 0 ]]; then
+      if [[ $(($co % 2 ) -eq 0 ]]; then
         CVSTRING_HALF="${CVSTRING_HALF} +append ) -append"
       fi
 	  fi
