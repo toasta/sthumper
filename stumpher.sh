@@ -58,8 +58,8 @@ while [[ $i -lt $LEN_SECONDS ]]; do
   OF="${D}/$OFN"
   OUT2=$( printf "$OUT-%06d.jpg" $i )
   ${FF} -noaccurate_seek -ss "${i}" -i "$UU" -frames:v 1 $OF 
-  if [ ! -s $OFN ]; then
-    cp $LASTF $OFN
+  if [ ! -s $OF ]; then
+    cp $LASTF $OF
   fi
   convert "$OF" "$OUT2"
   i=$(( $i + $INC ))
@@ -110,7 +110,7 @@ while [[ $j -lt $NUM ]]; do
 
 	if [ $(($j % $besides)) -eq 0 ]; then
 		CVSTRING="${CVSTRING} ("
-	  if [ $(($j2 % 2)) -eq 0 ]; then
+	  if [ $(($co % 2)) -eq 0 ]; then
             CVSTRING_HALF="$CVSTRING_HALF ("
         fi
 	fi
@@ -145,7 +145,7 @@ while [[ $j -lt $NUM ]]; do
 	  j=$(( $j + 1 ))
 	  if [[ $(($j % $besides)) -eq 0 ]]; then
 		  CVSTRING="${CVSTRING} +append ) -append"
-      if [[ $(($co % 2 ) -eq 0 ]]; then
+      if [[ $(($co % 2 )) -eq 0 ]]; then
         CVSTRING_HALF="${CVSTRING_HALF} +append ) -append"
       fi
 	  fi
@@ -155,7 +155,6 @@ done
 echo
 
 CVSTRING="$CVSTRING $OUT"
-CVSTRING_HALF="${CVSTRING_HALF} +append ) -append"
 CVSTRING_HALF="${CVSTRING_HALF} ${OUT}.half.jpg"
 
 $CVSTRING
