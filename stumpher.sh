@@ -16,7 +16,7 @@ if [ -s $OUT ]; then
   exit 1
 fi
 
-TILE_MIN_WIDTH=600
+TILE_MIN_WIDTH=300
 
 UU=$SRC
 
@@ -39,7 +39,6 @@ fi
 
 # this is int() => floor()
 besides=$(( $WIDTH / $TILE_MIN_WIDTH ))
-besides=3
 TILE_SIZE=$(( $WIDTH / $besides ))
 
 
@@ -93,8 +92,9 @@ echo "images if one per 60s $INC"
 while [[ $INC -gt 100 ]]; do
        INC=100
 done
-#INC=11
-INC=1
+INC=30
+
+#INC=1
 
 
 # round this up to next multiple of $besides
@@ -160,43 +160,47 @@ do
 
     #check if this image concludes a line
     # this is the same as $j % $besides == (besides - 1)
-	  if [[ $(( ($j+1) % $besides)) -eq 0 ]]; then
+    j=$(( $j + 1 ))
+	  #if [[ $(( ($j+1) % $besides)) -eq 0 ]]; then
+	  if [[ $(( ($j) % $besides)) -eq 0 ]]; then
 		  CVSTRING="${CVSTRING} +append ) -append"$'\n'
 	  fi
-    j=$(( $j + 1 ))
 done
 
 # TILES every second image only
 # TILES 2 LINES
 ##############################################33
 
-if [[ 0 -eq 1 ]]; then
+set -x
 
     co=0
     j=0
     for i in "${thumbs[@]}"
     do
+        #echo -e "\n\n****co($co), j($j), i($i)****\n\n"
         j=$(( $j + 1 ))
-        if [[ $(( $j % 2 )) -eq 0 ]]; then
+        if [[ $(( $j % 2 )) -eq 1 ]]; then
+            #echo "skipping"
             continue
         fi
-        co=$(( $co + 1 ))
 
         if [ $(($co % $besides)) -eq 0 ]; then
-            CVSTRING_HALF="${CVSTRING} ("
+            CVSTRING_HALF="${CVSTRING_HALF} ("
         fi
 
-        CVSTRING_HALF="${CVSTRING} $i"
+        echo "adding $i"
+        CVSTRING_HALF="${CVSTRING_HALF} $i"
+        co=$(( $co + 1 ))
+
           if [[ $(($co % $besides)) -eq 0 ]]; then
-              CVSTRING_HALF="${CVSTRING} +append ) -append"
+              CVSTRING_HALF="${CVSTRING_HALF} +append ) -append"
           fi
     done
-fi
 
-CVSTRING="$CVSTRING $OUT"
-#CVSTRING_HALF="${CVSTRING_HALF} ${OUT}.half.jpg"
+#CVSTRING="$CVSTRING $OUT"
+CVSTRING_HALF="${CVSTRING_HALF} ${OUT}.half.jpg"
 
-$CVSTRING
-#$CVSTRING_HALF
+#$CVSTRING
+$CVSTRING_HALF
 
 rm -r "$D"
