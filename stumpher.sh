@@ -92,7 +92,7 @@ echo "images if one per 60s $INC"
 while [[ $INC -gt 100 ]]; do
        INC=100
 done
-INC=30
+#INC=30
 
 #INC=1
 
@@ -197,10 +197,10 @@ set -x
           fi
     done
 
-#CVSTRING="$CVSTRING $OUT"
+CVSTRING="$CVSTRING $OUT"
 CVSTRING_HALF="${CVSTRING_HALF} ${OUT}.half.jpg"
 
-#$CVSTRING
+$CVSTRING
 $CVSTRING_HALF
 
 rm -r "$D"
