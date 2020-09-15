@@ -51,6 +51,10 @@ if [[ $INC -le 0 ]]; then
 	INC=1
 fi
 
+
+# FULLRES
+# #############################################33
+
 i=$INC
 co=0
 LASTF=""
@@ -75,6 +79,8 @@ CVSTRING="${CVSTRING} -append"
 CVSTRING_HALF="$CVSTRING"
 
 
+# TILES
+# #############################################33
 
 INC=60
 
@@ -94,12 +100,12 @@ INC=1
 #echo "rounding up to fit besides $besides ==== $INC + $INC % $besides"
 echo "wanna do $INC frames"
 INC=$(( $INC / $besides ))
+INC=5
 
 INC=$(( $INC + 1 ))
 
 INC=$(( $INC * $besides ))
 echo "rounding to next higher multiple of $besides => $INC"
-INC=5
 
 NUM=$INC
 
@@ -132,13 +138,16 @@ while [[ $j -lt $NUM ]]; do
 	  S2=$(( $S2 - ($M * 60 ) ))
 	  S=$(( $S2 ))
 	  LAB=$( printf "%02d:%02d:%02d" $H $M $S )
-	  OF=$( printf " ( ( -background #00000080 -fill white -font /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf label:%s ) -gravity southeast %s +swap -composite ) " $LAB $OF )
+	  OF=$( printf "\n\t( ( -background #00000080 -fill white -font /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf label:%s ) -gravity southeast %s +swap -composite )\n" $LAB $OF )
       thumbs+=$OF
       j=$(( $j + 1 ))
 
 done
 
 
+# TILES
+# TILES 2 LINES
+##############################################33
 j=0
 for i in "${thumbs[@]}"
 do
@@ -147,12 +156,19 @@ do
 	fi
 
     CVSTRING="${CVSTRING} $i"$'\n'
-	  j=$(( $j + 1 ))
-	  if [[ $(($j % $besides)) -eq 0 ]]; then
+
+
+    #check if this image concludes a line
+    # this is the same as $j % $besides == (besides - 1)
+	  if [[ $(( ($j+1) % $besides)) -eq 0 ]]; then
 		  CVSTRING="${CVSTRING} +append ) -append"$'\n'
 	  fi
+    j=$(( $j + 1 ))
 done
 
+# TILES every second image only
+# TILES 2 LINES
+##############################################33
 
 if [[ 0 -eq 1 ]]; then
 
