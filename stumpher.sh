@@ -37,6 +37,7 @@ fi
 
 # this is int() => floor()
 besides=$(( $WIDTH / $TILE_MIN_WIDTH ))
+besides=3
 TILE_SIZE=$(( $WIDTH / $besides ))
 
 
@@ -85,6 +86,7 @@ while [[ $INC -gt 100 ]]; do
        INC=100
 done
 #INC=11
+INC=1
 
 
 # round this up to next multiple of $besides
@@ -97,27 +99,21 @@ INC=$(( $INC + 1 ))
 
 INC=$(( $INC * $besides ))
 echo "rounding to next higher multiple of $besides => $INC"
+INC=5
 
 NUM=$INC
 
 #exit
 
-co=0
+declare -a thumbs
 j=0
 
 while [[ $j -lt $NUM ]]; do
   echo -n " $(( 100 * $j / $NUM ))%"
 
-	if [ $(($j % $besides)) -eq 0 ]; then
-		CVSTRING="${CVSTRING} ("
-	  if [ $(($j % ($besides * 2))) -eq 0 ]; then
-            CVSTRING_HALF="$CVSTRING_HALF ("
-        fi
-	fi
     # if the video is less than say 6 seconds for 6 besides, this needs
     # to overwrite the image
     sec=$(( ($LEN_SECONDS / $NUM) * $j ))
-	  co=$(( $co + 1 ))
 	  OF=$( printf "$D/tn-%06d.tif" $j )
 	  ${FF} -noaccurate_seek -ss "${sec}" -i "$UU" -frames:v 1 \
 		-vf scale=iw/$besides:ih/$besides $OF 
@@ -137,28 +133,54 @@ while [[ $j -lt $NUM ]]; do
 	  S=$(( $S2 ))
 	  LAB=$( printf "%02d:%02d:%02d" $H $M $S )
 	  OF=$( printf " ( ( -background #00000080 -fill white -font /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf label:%s ) -gravity southeast %s +swap -composite ) " $LAB $OF )
-
-	  CVSTRING="${CVSTRING} $OF"
-    if [[ $(( $co % 2 )) -eq 0 ]]; then
-      CVSTRING_HALF="$CVSTRING_HALF $OF"
-    fi
-	  j=$(( $j + 1 ))
-	  if [[ $(($j % $besides)) -eq 0 ]]; then
-		  CVSTRING="${CVSTRING} +append ) -append"
-	  fi
-          if [[ $(($j % ($besides * 2) )) -eq 0 ]]; then
-            CVSTRING_HALF="${CVSTRING_HALF} +append ) -append"
-          fi
-
+      thumbs+=$OF
+      j=$(( $j + 1 ))
 
 done
-echo
+
+
+j=0
+for i in "${thumbs[@]}"
+do
+	if [ $(($j % $besides)) -eq 0 ]; then
+		CVSTRING="${CVSTRING} ("$'\n'
+	fi
+
+    CVSTRING="${CVSTRING} $i"$'\n'
+	  j=$(( $j + 1 ))
+	  if [[ $(($j % $besides)) -eq 0 ]]; then
+		  CVSTRING="${CVSTRING} +append ) -append"$'\n'
+	  fi
+done
+
+
+if [[ 0 -eq 1 ]]; then
+
+    co=0
+    j=0
+    for i in "${thumbs[@]}"
+    do
+        j=$(( $j + 1 ))
+        if [[ $(( $j % 2 )) -eq 0 ]]; then
+            continue
+        fi
+        co=$(( $co + 1 ))
+
+        if [ $(($co % $besides)) -eq 0 ]; then
+            CVSTRING_HALF="${CVSTRING} ("
+        fi
+
+        CVSTRING_HALF="${CVSTRING} $i"
+          if [[ $(($co % $besides)) -eq 0 ]]; then
+              CVSTRING_HALF="${CVSTRING} +append ) -append"
+          fi
+    done
+fi
 
 CVSTRING="$CVSTRING $OUT"
-#CVSTRING_HALF="${CVSTRING_HALF} +append ) -append"
-CVSTRING_HALF="${CVSTRING_HALF} ${OUT}.half.jpg"
+#CVSTRING_HALF="${CVSTRING_HALF} ${OUT}.half.jpg"
 
 $CVSTRING
-$CVSTRING_HALF
+#$CVSTRING_HALF
 
 rm -r "$D"
