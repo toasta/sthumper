@@ -81,9 +81,8 @@ INC=60
 INC=$(( ($LEN_SECONDS) / 60 ))
 echo "images if one per 60s $INC"
 
-while [[ $INC -ge 100 ]]; do
-      echo "halfing to get below 100"
-       INC=$(( $INC / 2 ))
+while [[ $INC -gt 100 ]]; do
+       INC=100
 done
 
 
@@ -110,7 +109,7 @@ while [[ $j -lt $NUM ]]; do
 
 	if [ $(($j % $besides)) -eq 0 ]; then
 		CVSTRING="${CVSTRING} ("
-	  if [ $(($co % 2)) -eq 0 ]; then
+	  if [ $(($j % ($besides * 2))) -eq 0 ]; then
             CVSTRING_HALF="$CVSTRING_HALF ("
         fi
 	fi
@@ -145,7 +144,7 @@ while [[ $j -lt $NUM ]]; do
 	  j=$(( $j + 1 ))
 	  if [[ $(($j % $besides)) -eq 0 ]]; then
 		  CVSTRING="${CVSTRING} +append ) -append"
-      if [[ $(($co % 2 )) -eq 0 ]]; then
+      if [[ $(($j % ($besides * 2) )) -eq 0 ]]; then
         CVSTRING_HALF="${CVSTRING_HALF} +append ) -append"
       fi
 	  fi
@@ -155,6 +154,7 @@ done
 echo
 
 CVSTRING="$CVSTRING $OUT"
+CVSTRING_HALF="${CVSTRING_HALF} +append ) -append"
 CVSTRING_HALF="${CVSTRING_HALF} ${OUT}.half.jpg"
 
 $CVSTRING
