@@ -29,7 +29,7 @@ FF="ffmpeg -loglevel quiet"
 
 
 LEN_SECONDS=$(( ${format_duration%\.*} - 0 ))
-NUM_FULLRES=4
+NUM_FULLRES=6
 
 WIDTH=${streams_stream_0_coded_width:=0}
 
@@ -69,7 +69,7 @@ while [[ $i -lt $LEN_SECONDS ]]; do
   fi
   convert "$OF" "$OUT2"
   i=$(( $i + $INC ))
-  if [[ $(( ($co % 2) )) -eq 0 ]]; then
+  if [[ $co -eq $(( $NUM_FULLRES * 1/4))  || $co -eq $(( $NUM_FULLRES * 3/4 ))  ]]; then
 	  CVSTRING="${CVSTRING} $OF"
   fi
 	co=$(( $co + 1 ))
