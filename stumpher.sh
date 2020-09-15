@@ -84,6 +84,7 @@ echo "images if one per 60s $INC"
 while [[ $INC -gt 100 ]]; do
        INC=100
 done
+#INC=11
 
 
 # round this up to next multiple of $besides
@@ -144,17 +145,17 @@ while [[ $j -lt $NUM ]]; do
 	  j=$(( $j + 1 ))
 	  if [[ $(($j % $besides)) -eq 0 ]]; then
 		  CVSTRING="${CVSTRING} +append ) -append"
-      if [[ $(($j % ($besides * 2) )) -eq 0 ]]; then
-        CVSTRING_HALF="${CVSTRING_HALF} +append ) -append"
-      fi
 	  fi
+          if [[ $(($j % ($besides * 2) )) -eq 0 ]]; then
+            CVSTRING_HALF="${CVSTRING_HALF} +append ) -append"
+          fi
 
 
 done
 echo
 
 CVSTRING="$CVSTRING $OUT"
-CVSTRING_HALF="${CVSTRING_HALF} +append ) -append"
+#CVSTRING_HALF="${CVSTRING_HALF} +append ) -append"
 CVSTRING_HALF="${CVSTRING_HALF} ${OUT}.half.jpg"
 
 $CVSTRING
