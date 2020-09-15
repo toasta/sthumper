@@ -185,7 +185,7 @@ done
             CVSTRING_HALF="${CVSTRING_HALF} ("
         fi
 
-        echo "adding $i"
+        #echo "adding $i"
         CVSTRING_HALF="${CVSTRING_HALF} $i"
         co=$(( $co + 1 ))
 
@@ -201,3 +201,4 @@ $CVSTRING
 $CVSTRING_HALF
 
 rm -r "$D"
+echo
