@@ -111,7 +111,7 @@ NUM=$INC
 
 #exit
 
-declare -a thumbs
+thumbs=()
 j=0
 
 while [[ $j -lt $NUM ]]; do
@@ -139,7 +139,7 @@ while [[ $j -lt $NUM ]]; do
 	  S=$(( $S2 ))
 	  LAB=$( printf "%02d:%02d:%02d" $H $M $S )
 	  OF=$( printf "\n\t( ( -background #00000080 -fill white -font /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf label:%s ) -gravity southeast %s +swap -composite )\n" $LAB $OF )
-      thumbs+="$OF"
+      thumbs+=("$OF")
       j=$(( $j + 1 ))
 
 done
@@ -150,7 +150,7 @@ done
 j=0
 for i in "${thumbs[@]}"
 do
-    echo "\n\n****j($j) besides($besides) i($i)****\n"
+    #echo "\n\n****j($j) besides($besides) i($i)****\n"
 	if [ $(($j % $besides)) -eq 0 ]; then
 		CVSTRING="${CVSTRING} ("$'\n'
 	fi
@@ -161,7 +161,6 @@ do
     #check if this image concludes a line
     # this is the same as $j % $besides == (besides - 1)
 	  if [[ $(( ($j+1) % $besides)) -eq 0 ]]; then
-        echo "ending line"
 		  CVSTRING="${CVSTRING} +append ) -append"$'\n'
 	  fi
     j=$(( $j + 1 ))
