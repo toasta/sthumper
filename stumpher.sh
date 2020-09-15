@@ -52,17 +52,22 @@ fi
 
 i=$INC
 co=0
-while [[ $i -le $LEN_SECONDS ]]; do
+LASTF=""
+while [[ $i -lt $LEN_SECONDS ]]; do
   OFN=$( printf "fullres-%06d.tif" $i )
   OF="${D}/$OFN"
   OUT2=$( printf "$OUT-%06d.jpg" $i )
   ${FF} -noaccurate_seek -ss "${i}" -i "$UU" -frames:v 1 $OF 
+  if [ ! -s $OFN ]; then
+    cp $LASTF $OFN
+  fi
   convert "$OF" "$OUT2"
   i=$(( $i + $INC ))
   if [[ $(( ($co % 2) )) -eq 0 ]]; then
 	  CVSTRING="${CVSTRING} $OF"
   fi
 	co=$(( $co + 1 ))
+  LASTF=$OUT2
 done
 CVSTRING="${CVSTRING} -append"
 
@@ -111,6 +116,11 @@ while [[ $j -lt $NUM ]]; do
 	  OF=$( printf "$D/tn-%06d.tif" $j )
 	  ${FF} -noaccurate_seek -ss "${sec}" -i "$UU" -frames:v 1 \
 		-vf scale=iw/$besides:ih/$besides $OF 
+    # maybe corrupt somewhere in the middle, use last image.
+    # FIXME - what at image 0?
+    if [ ! -s $OF ]; then
+      cp $( printf "$D/tn-%06d.tif" $(( $j - 1 )) ) "$OF"
+    fi
 	  S2=$sec
 	  H=0
 	  M=0
