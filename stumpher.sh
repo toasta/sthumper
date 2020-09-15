@@ -71,6 +71,8 @@ while [[ $i -lt $LEN_SECONDS ]]; do
 done
 CVSTRING="${CVSTRING} -append"
 
+CVSTRING_HALF="$CVSTRING"
+
 
 
 INC=60
@@ -108,6 +110,9 @@ while [[ $j -lt $NUM ]]; do
 
 	if [ $(($j % $besides)) -eq 0 ]; then
 		CVSTRING="${CVSTRING} ("
+	  if [ $(($j % ($besides*2))) -eq 0 ]; then
+      CVSTRING_HALF="$CVSTRING_HALF ("
+    fi
 	fi
     # if the video is less than say 6 seconds for 6 besides, this needs
     # to overwrite the image
@@ -132,28 +137,28 @@ while [[ $j -lt $NUM ]]; do
 	  S=$(( $S2 ))
 	  LAB=$( printf "%02d:%02d:%02d" $H $M $S )
 	  OF=$( printf " ( ( -background #00000080 -fill white -font /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf label:%s ) -gravity southeast %s +swap -composite ) " $LAB $OF )
+
 	  CVSTRING="${CVSTRING} $OF"
+    if [[ $(( $co % 2 )) -eq 0 ]]; then
+      CVSTRING_HALF="$CVSTRING_HALF $OF"
+    fi
 	  j=$(( $j + 1 ))
 	  if [[ $(($j % $besides)) -eq 0 ]]; then
-		CVSTRING="${CVSTRING} +append ) -append"
+		  CVSTRING="${CVSTRING} +append ) -append"
+      if [[ $(($j % ($besides*2))) -eq 0 ]]; then
+        CVSTRING_HALF="${CVSTRING_HALF} +append ) -append"
+      fi
 	  fi
+
+
 done
 echo
-#CVSTRING="${CVSTRING} +append ) -append"
-#CVSTRING="${CVSTRING} +append ) -append"
-# if [[ $co -gt 0 ]]; then
-# 	CVSTRING="${CVSTRING} +append ) -append"
-# 	co=0
-# fi
-
-#if [[ $co -gt 0 ]]; then
-	#CVSTRING="$CVSTRING +append ) -append"
-
-#fi
-
 
 CVSTRING="$CVSTRING $OUT"
+CVSTRING_HALF="${CVSTRING_HALF} +append ) -append"
+CVSTRING_HALF="${CVSTRING_HALF} ${OUT}.half.jpg"
 
 $CVSTRING
+$CVSTRING_HALF
 
 rm -r "$D"
