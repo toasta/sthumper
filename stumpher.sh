@@ -1,7 +1,5 @@
 #! /bin/bash
 
-set +x
-
 #set -euxo pipefail
 #set -euo pipefail
 #set -x
@@ -171,7 +169,6 @@ done
 # TILES 2 LINES
 ##############################################33
 
-set -x
 
     co=0
     j=0
