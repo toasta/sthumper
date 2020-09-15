@@ -1,5 +1,7 @@
 #! /bin/bash
 
+set +x
+
 #set -euxo pipefail
 #set -euo pipefail
 #set -x
@@ -14,7 +16,7 @@ if [ -s $OUT ]; then
   exit 1
 fi
 
-TILE_MIN_WIDTH=300
+TILE_MIN_WIDTH=600
 
 UU=$SRC
 
@@ -100,8 +102,6 @@ INC=1
 #echo "rounding up to fit besides $besides ==== $INC + $INC % $besides"
 echo "wanna do $INC frames"
 INC=$(( $INC / $besides ))
-INC=5
-
 INC=$(( $INC + 1 ))
 
 INC=$(( $INC * $besides ))
@@ -139,18 +139,18 @@ while [[ $j -lt $NUM ]]; do
 	  S=$(( $S2 ))
 	  LAB=$( printf "%02d:%02d:%02d" $H $M $S )
 	  OF=$( printf "\n\t( ( -background #00000080 -fill white -font /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf label:%s ) -gravity southeast %s +swap -composite )\n" $LAB $OF )
-      thumbs+=$OF
+      thumbs+="$OF"
       j=$(( $j + 1 ))
 
 done
 
 
 # TILES
-# TILES 2 LINES
 ##############################################33
 j=0
 for i in "${thumbs[@]}"
 do
+    echo "\n\n****j($j) besides($besides) i($i)****\n"
 	if [ $(($j % $besides)) -eq 0 ]; then
 		CVSTRING="${CVSTRING} ("$'\n'
 	fi
@@ -161,6 +161,7 @@ do
     #check if this image concludes a line
     # this is the same as $j % $besides == (besides - 1)
 	  if [[ $(( ($j+1) % $besides)) -eq 0 ]]; then
+        echo "ending line"
 		  CVSTRING="${CVSTRING} +append ) -append"$'\n'
 	  fi
     j=$(( $j + 1 ))
