@@ -101,10 +101,10 @@ done
 
 #echo "rounding up to fit besides $besides ==== $INC + $INC % $besides"
 echo "wanna do $INC frames"
-INC=$(( $INC / $besides ))
+INC=$(( $INC / ($besides *2) ))
 INC=$(( $INC + 1 ))
 
-INC=$(( $INC * $besides ))
+INC=$(( $INC * $besides *2 ))
 echo "rounding to next higher multiple of $besides => $INC"
 
 NUM=$INC
