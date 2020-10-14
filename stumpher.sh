@@ -60,7 +60,7 @@ LASTF=""
 while [[ $i -lt $LEN_SECONDS ]]; do
   OFN=$( printf "fullres-%06d.tif" $i )
   OF="${D}/$OFN"
-  OUT2=$( printf "$OUT-%06d.jpg" $i )
+  OUT2=$( printf "$OUT-%06d.webp" $i )
   ${FF} -noaccurate_seek -ss "${i}" -i "$UU" -frames:v 1 $OF 
   if [ ! -s $OF ]; then
     cp $LASTF $OF
@@ -75,7 +75,7 @@ while [[ $i -lt $LEN_SECONDS ]]; do
 done
 CVSTRING="${CVSTRING} -append"
 
-CVSTRING_HALF="$CVSTRING"
+#CVSTRING_HALF="$CVSTRING"
 
 
 # TILES
@@ -182,23 +182,23 @@ done
         fi
 
         if [ $(($co % $besides)) -eq 0 ]; then
-            CVSTRING_HALF="${CVSTRING_HALF} ("
+            #CVSTRING_HALF="${CVSTRING_HALF} ("
         fi
 
         #echo "adding $i"
-        CVSTRING_HALF="${CVSTRING_HALF} $i"
+        #CVSTRING_HALF="${CVSTRING_HALF} $i"
         co=$(( $co + 1 ))
 
           if [[ $(($co % $besides)) -eq 0 ]]; then
-              CVSTRING_HALF="${CVSTRING_HALF} +append ) -append"
+              #CVSTRING_HALF="${CVSTRING_HALF} +append ) -append"
           fi
     done
 
 CVSTRING="$CVSTRING $OUT"
-CVSTRING_HALF="${CVSTRING_HALF} ${OUT}.half.jpg"
+#CVSTRING_HALF="${CVSTRING_HALF} ${OUT}.half.webp"
 
 $CVSTRING
-$CVSTRING_HALF
+#$CVSTRING_HALF
 
 rm -r "$D"
 echo
