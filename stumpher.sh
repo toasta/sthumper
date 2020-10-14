@@ -75,7 +75,6 @@ while [[ $i -lt $LEN_SECONDS ]]; do
 done
 CVSTRING="${CVSTRING} -append"
 
-#CVSTRING_HALF="$CVSTRING"
 
 
 # TILES
@@ -165,40 +164,9 @@ do
 	  fi
 done
 
-# TILES every second image only
-# TILES 2 LINES
-##############################################33
-
-
-    co=0
-    j=0
-    for i in "${thumbs[@]}"
-    do
-        #echo -e "\n\n****co($co), j($j), i($i)****\n\n"
-        j=$(( $j + 1 ))
-        if [[ $(( $j % 2 )) -eq 1 ]]; then
-            #echo "skipping"
-            continue
-        fi
-
-        if [ $(($co % $besides)) -eq 0 ]; then
-            #CVSTRING_HALF="${CVSTRING_HALF} ("
-        fi
-
-        #echo "adding $i"
-        #CVSTRING_HALF="${CVSTRING_HALF} $i"
-        co=$(( $co + 1 ))
-
-          if [[ $(($co % $besides)) -eq 0 ]]; then
-              #CVSTRING_HALF="${CVSTRING_HALF} +append ) -append"
-          fi
-    done
-
 CVSTRING="$CVSTRING $OUT"
-#CVSTRING_HALF="${CVSTRING_HALF} ${OUT}.half.webp"
 
 $CVSTRING
-#$CVSTRING_HALF
 
 rm -r "$D"
 echo
