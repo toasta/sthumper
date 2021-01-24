@@ -35,6 +35,11 @@ if [[ $WIDTH -eq 0 ]]; then
 	WIDTH=${streams_stream_1_coded_width}
 fi
 
+# 4k looks to small to see, double it up
+if [[ $WIDTH -ge 1920 ]]; then
+  TILE_MIN_WIDTH=$(( $TILE_MIN_WIDTH * 2 ))
+fi
+
 # this is int() => floor()
 besides=$(( $WIDTH / $TILE_MIN_WIDTH ))
 TILE_SIZE=$(( $WIDTH / $besides ))
