@@ -1,8 +1,10 @@
 #! /bin/bash
 
-set -euxo pipefail
+set -euo pipefail
 
-D=$(mktemp -d)
+DDD=/dev/shm/sthumph/
+mkdir -p $DDD
+D=$(mktemp -d -p $DDD)
 SRC=$1
 OUT=$2
 NFO="$D/ffprobe-output"
@@ -80,9 +82,9 @@ while [[ $j -le $SECLESS ]]; do
   OF="${D}/$OFN"
   OUT2=$( printf "$OUT-%04d.jpg" $j )
   ${FF} -noaccurate_seek -ss "${j}" -i "$UU" -frames:v 1 $OF 
-  convert "$OF" -resize '1920x>' "$OUT2"
+  #convert "$OF" -resize '1920x>' "$OUT2"
   j=$(( $j + $SEQ1 ))
-  echo $OF
+  #echo $OF
 done
 
 
@@ -93,7 +95,7 @@ while [[ $j -lt $SECLESS ]]; do
   ${FF} -noaccurate_seek -ss "${j}" -i "$UU" -frames:v 1 \
 	-vf scale=iw/$besides:ih/$besides $OF 
   j=$(( $j + $SEQ2 ))
-  echo $OF
+  #echo $OF
 done
 
 wait
@@ -150,4 +152,4 @@ CVSTRING="$CVSTRING -quality 90 $OUT"
 
 $CVSTRING
 
-rm -vr "$D"
+rm -r "$D"

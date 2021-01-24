@@ -67,9 +67,12 @@ INC=60
 # how many images if one per minute?
 INC=$(( ($SECONDS) / 60 ))
 echo "images if one per 60s $INC"
+while [[ $INC -ge 200 ]]; do
+	$INC=$(( $INC / 2 ))
+done
 
 # advance one as we dont start at 0
-INC=$(( $INC + 2 ))
+INC=$(( $INC ))
 # round this up to next multiple of $besides
 INC=$(( $INC + ($INC % $besides) ))
 echo "rounding up to fit besides $besides"
