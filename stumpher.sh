@@ -4,9 +4,18 @@
 #set -euo pipefail
 #set -x
 
-D=$(mktemp -d)
 SRC=$1
 OUT=$2
+LOCAL=${3:=0}
+
+if [ $LOCAL ]; then
+	DDD=dev/shm/sthumph/
+	mkdir -p $DDD
+	D=$(mktemp -d -p $DDD)
+else
+D=$(mktemp -d)
+fi
+
 NFO="$D/ffprobe-output"
 
 if [ -s $OUT ]; then
