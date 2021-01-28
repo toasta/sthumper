@@ -79,7 +79,9 @@ while [[ $i -lt $LEN_SECONDS ]]; do
   if [ ! -s $OF ]; then
     cp $LASTF $OF
   fi
-  convert "$OF" "$OUT2"
+	if [ ! $LOCAL ]; then
+  		convert "$OF" "$OUT2"
+	fi
   i=$(( $i + $INC ))
   if [[ $co -eq $(( $NUM_FULLRES * 1/4))  || $co -eq $(( $NUM_FULLRES * 3/4 ))  ]]; then
 	  CVSTRING="${CVSTRING} $OF"
@@ -178,9 +180,6 @@ do
 	  fi
 done
 
-CVSTRING="$CVSTRING $OUT"
-
-$CVSTRING
+$CVSTRING "$OUT"
 
 rm -r "$D"
-echo
