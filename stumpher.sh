@@ -116,7 +116,7 @@ INC=60
 
 # how many images if one per minute?
 INC=$(( ($LEN_SECONDS) / 60 ))
-echo "images if one per 60s $INC"
+#echo "images if one per 60s $INC"
 
 while [[ $INC -gt 100 ]]; do
        INC=100
@@ -129,12 +129,12 @@ done
 # round this up to next multiple of $besides
 
 #echo "rounding up to fit besides $besides ==== $INC + $INC % $besides"
-echo "wanna do $INC frames"
+#echo "wanna do $INC frames"
 INC=$(( $INC / ($besides *2) ))
 INC=$(( $INC + 1 ))
 
 INC=$(( $INC * $besides *2 ))
-echo "rounding to next higher multiple of $besides => $INC"
+#echo "rounding to next higher multiple of $besides => $INC"
 
 NUM=$INC
 
@@ -144,7 +144,7 @@ thumbs=()
 j=0
 
 while [[ $j -lt $NUM ]]; do
-  echo -n " $(( 100 * $j / $NUM ))%"
+  #echo -n " $(( 100 * $j / $NUM ))%"
 
     # if the video is less than say 6 seconds for 6 besides, this needs
     # to overwrite the image
@@ -196,7 +196,7 @@ do
 	  fi
 done
 
-echo $CVSTRING
+#echo $CVSTRING
 
 $CVSTRING "$OUT"
 
