@@ -6,7 +6,8 @@
 
 SRC=$1
 OUT=$2
-LOCAL=${3:=0}
+tmp=$3
+LOCAL=${tmp:=0}
 
 if [ $LOCAL ]; then
 	DDD=dev/shm/sthumph/
