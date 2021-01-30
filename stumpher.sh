@@ -52,10 +52,22 @@ fi
 
 # this is int() => floor()
 besides=$(( $WIDTH / $TILE_MIN_WIDTH ))
+besides_scale=$besides
+
 TILE_SIZE=$(( $WIDTH / $besides ))
 
+DO_FULLRES=1
 
-echo "$SRC is ${LEN_SECONDS}s long and $WIDTH wide; resulting tilesize $TILE_SIZE"
+if [[ $WIDTH -lt 600 ]]; then
+	DO_FULLRES=0
+	TILE_SIZE=$WIDTH
+	besides=$(((1920-100)/$WIDTH))
+	besides_scale=1
+fi
+
+
+echo -ne "$SRC is ${LEN_SECONDS}s long"
+echo -ne " and $WIDTH wide; resulting tilesize $TILE_SIZE\n"
 
 CVSTRING="convert "
 
@@ -85,13 +97,16 @@ while [[ $i -lt $LEN_SECONDS ]]; do
 	fi
   i=$(( $i + $INC ))
   if [[ $co -eq $(( $NUM_FULLRES * 1/4))  || $co -eq $(( $NUM_FULLRES * 3/4 ))  ]]; then
+	  if [[ $DO_FULLRES -eq 1 ]]; then
 	  CVSTRING="${CVSTRING} $OF"
+	  fi
   fi
 	co=$(( $co + 1 ))
   LASTF=$OUT2
 done
-CVSTRING="${CVSTRING} -append"
-
+if [[ $DO_FULLRES -eq 1 ]]; then
+	CVSTRING="${CVSTRING} -append"
+fi
 
 
 # TILES
@@ -136,7 +151,7 @@ while [[ $j -lt $NUM ]]; do
     sec=$(( ($LEN_SECONDS / $NUM) * $j ))
 	  OF=$( printf "$D/tn-%06d.tif" $j )
 	  ${FF} -noaccurate_seek -ss "${sec}" -i "$UU" -frames:v 1 \
-		-vf scale=iw/$besides:ih/$besides $OF 
+		-vf scale=iw/$besides_scale:ih/$besides_scale $OF 
     # maybe corrupt somewhere in the middle, use last image.
     # FIXME - what at image 0?
     if [ ! -s $OF ]; then
@@ -180,6 +195,8 @@ do
 		  CVSTRING="${CVSTRING} +append ) -append"$'\n'
 	  fi
 done
+
+echo $CVSTRING
 
 $CVSTRING "$OUT"
 
