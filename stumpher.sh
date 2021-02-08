@@ -58,10 +58,10 @@ TILE_SIZE=$(( $WIDTH / $besides ))
 
 DO_FULLRES=1
 
-if [[ $WIDTH -lt 600 ]]; then
+if [[ $WIDTH -lt $((1920/1)) ]]; then
 	DO_FULLRES=0
 	TILE_SIZE=$WIDTH
-	besides=$(((1920-100)/$WIDTH))
+	besides=$(((1920-0)/$WIDTH))
 	besides_scale=1
 fi
 
