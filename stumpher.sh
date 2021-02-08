@@ -66,8 +66,7 @@ if [[ $WIDTH -lt 600 ]]; then
 fi
 
 
-echo -ne "$SRC is ${LEN_SECONDS}s long"
-echo -ne " and $WIDTH wide; resulting tilesize $TILE_SIZE\n"
+printf "width(%4d), length(%4d), tilesize(%3d), filename(%s)\n" $WIDTH $LEN_SECONDS $TILE_SIZE $SRC
 
 CVSTRING="convert "
 
