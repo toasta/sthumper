@@ -10,7 +10,7 @@ tmp=$3
 LOCAL=${tmp:=0}
 
 if [ $LOCAL ]; then
-	DDD=dev/shm/sthumph/
+	DDD=/dev/shm/sthumph/
 	mkdir -p $DDD
 	D=$(mktemp -d -p $DDD)
 else
