@@ -9,7 +9,7 @@ OUT=$2
 tmp=$3
 LOCAL=${tmp:=0}
 
-if [ $LOCAL != "0"]; then
+if [ $LOCAL != "0" ]; then
 	DDD=/dev/shm/sthumph/
 	mkdir -p $DDD
 	D=$(mktemp -d -p $DDD)
