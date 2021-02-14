@@ -9,7 +9,7 @@ OUT=$2
 tmp=$3
 LOCAL=${tmp:=0}
 
-if [ $LOCAL ]; then
+if [ $LOCAL != "0"]; then
 	DDD=/dev/shm/sthumph/
 	mkdir -p $DDD
 	D=$(mktemp -d -p $DDD)
@@ -91,7 +91,7 @@ while [[ $i -lt $LEN_SECONDS ]]; do
   if [ ! -s $OF ]; then
     cp $LASTF $OF
   fi
-	if [ ! $LOCAL ]; then
+	if [ $LOCAL = "0" ]; then
   		convert "$OF" "$OUT2"
 	fi
   i=$(( $i + $INC ))
