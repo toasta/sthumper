@@ -58,7 +58,7 @@ TILE_SIZE=$(( $WIDTH / $besides ))
 
 DO_FULLRES=1
 
-if [[ $WIDTH -lt $((1920/1)) ]]; then
+if [[ $WIDTH -lt $((1920/2)) ]]; then
 	DO_FULLRES=0
 	TILE_SIZE=$WIDTH
 	besides=$(((1920-0)/$WIDTH))
