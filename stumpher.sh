@@ -76,6 +76,8 @@ NUM_FULLRES=6
 # use first video stream as *the* stream and use that's (:) width
 NUM_STREAMS=${format_nb_streams}
 i=0
+WIDTH="unknown"
+HEIGHT="unknown"
 while [ $i -le $NUM_STREAMS ]; do
   tmp="streams_stream_${i}_codec_type"
   tv=${!tmp}
@@ -86,6 +88,8 @@ while [ $i -le $NUM_STREAMS ]; do
     tv=${!tmp}
     if [[ "X$tv" != "X" && "$tv" -gt 0 ]]; then
       WIDTH=$tv
+    	tmp="streams_stream_${i}_height"
+	HEIGHT=${!tmp}
       break
     fi
   fi
@@ -94,7 +98,7 @@ while [ $i -le $NUM_STREAMS ]; do
 done
 
 
-if [ "X${WIDTH}" = "X" ]; then
+if [ "${WIDTH}" = "unknown" ]; then
   echo "no useable video stream with a width set found; skipping this file"
   exit
 fi
@@ -124,7 +128,6 @@ printf "width(%4d), length(%4d), tilesize(%3d), filename(%s)\n" $WIDTH $LEN_SECO
 
 CVSTRING="convert "
 
-
 INC=$(( $LEN_SECONDS / $NUM_FULLRES ))
 if [[ $INC -le 0 ]]; then
 	INC=1
@@ -134,30 +137,30 @@ fi
 # FULLRES
 # #############################################33
 
-i=$INC
-co=0
-LASTF=""
-while [[ $i -lt $LEN_SECONDS ]]; do
-  OFN=$( printf "fullres-%06d.tif" $i )
-  OF="${D}/$OFN"
-  OUT2=$( printf "$OUT-%06d.webp" $i )
-  ${FF} -noaccurate_seek -ss "${i}" -i "$UU" -frames:v 1 $OF 
-  if [ ! -s $OF ]; then
-    cp $LASTF $OF
-  fi
-	if [ $LOCAL = "0" ]; then
-  		convert "$OF" "$OUT2"
-	fi
-  i=$(( $i + $INC ))
-  if [[ $co -eq $(( $NUM_FULLRES * 1/4))  || $co -eq $(( $NUM_FULLRES * 3/4 ))  ]]; then
-	  if [[ $DO_FULLRES -eq 1 ]]; then
-	  CVSTRING="${CVSTRING} $OF"
+if [ $DO_FULLRES -eq 1 ]; then
+	i=$INC
+	co=0
+	LASTF=""
+	while [[ $i -lt $LEN_SECONDS ]]; do
+	  OFN=$( printf "fullres-%06d.tif" $i )
+	  OF="${D}/$OFN"
+	  OUT2=$( printf "$OUT-%06d.webp" $i )
+	  ${FF} -noaccurate_seek -ss "${i}" -i "$UU" -frames:v 1 $OF 
+	  if [ ! -s $OF ]; then
+	    cp $LASTF $OF
 	  fi
-  fi
-	co=$(( $co + 1 ))
-  LASTF=$OUT2
-done
-if [[ $DO_FULLRES -eq 1 ]]; then
+		if [ $LOCAL = "0" ]; then
+			convert "$OF" "$OUT2"
+		fi
+	  i=$(( $i + $INC ))
+	  if [[ $co -eq $(( $NUM_FULLRES * 1/4))  || $co -eq $(( $NUM_FULLRES * 3/4 ))  ]]; then
+		  if [[ $DO_FULLRES -eq 1 ]]; then
+		  CVSTRING="${CVSTRING} $OF"
+		  fi
+	  fi
+		co=$(( $co + 1 ))
+	  LASTF=$OUT2
+	done
 	CVSTRING="${CVSTRING} -append"
 fi
 
@@ -166,35 +169,46 @@ fi
 # #############################################33
 
 INC=60
-
-# how many images if one per minute?
 INC=$(( ($LEN_SECONDS) / 60 ))
 #echo "images if one per 60s $INC"
 
-while [[ $INC -gt 100 ]]; do
+if [[ $INC -gt 100 ]]; then
        INC=100
-done
-#INC=30
-
-#INC=1
+fi
 
 
 # round this up to next multiple of $besides
-
 #echo "rounding up to fit besides $besides ==== $INC + $INC % $besides"
-#echo "wanna do $INC frames"
 INC=$(( $INC / ($besides *2) ))
 INC=$(( $INC + 1 ))
-
 INC=$(( $INC * $besides *2 ))
-#echo "rounding to next higher multiple of $besides => $INC"
+
+# cope with webpS 16384 limit.
+# we even don't care if it's not webp
+
+FULLS_HEIGHT_HEIGHT=$(($HEIGHT * $NUM_FULLRES * $DO_FULLRES))
+
+this_height=$(( $FULLS_HEIGHT_HEIGHT + ($INC/$besides)*$HEIGHT/$besides_scale ))
+
+
+# NOTE, bash does not do floating....
+
+if [ $this_height -ge 16384 ]; then
+	echo "Image would be $this_height ($INC / $besides * $HEIGHT/$besides_scale) high; chosing to fit in 16k limits (for webp)"
+	# desired height
+	SPACE_LEFT=$(( 16384 - $FULLS_HEIGHT_HEIGHT ))
+	echo "SPAC ELEFT $SPACE_LEFT"
+	INC=$(( $SPACE_LEFT / ($HEIGHT*$besides_scale) ))
+	echo "$INC images w/ height $HEIGHT possible => $(( $INC * $HEIGHT ))"
+	# dunno why -1... maybe line 0 already has 960 height?
+	INC=$(( ($INC-1) * $besides ))
+fi
 
 NUM=$INC
 
-#exit
-
 thumbs=()
 j=0
+
 
 while [[ $j -lt $NUM ]]; do
   #echo -n " $(( 100 * $j / $NUM ))%"
