@@ -28,7 +28,7 @@ TILE_MIN_WIDTH=300
 
 UU=$SRC
 
-ffprobe -nostdin - -print_format flat=sep_char=_ -show_format -show_streams -loglevel quiet "$UU" < /dev/null > "$NFO" 
+ffprobe -print_format flat=sep_char=_ -show_format -show_streams -loglevel quiet "$UU" < /dev/null > "$NFO" 
 . $NFO
 
 if [ "${format_duration}" = "N/A" -o "X${format_duration}" = "X" ]; then
