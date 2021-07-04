@@ -54,11 +54,26 @@ FF="ffmpeg -loglevel quiet"
 LEN_SECONDS=$(( ${format_duration%\.*} - 0 ))
 NUM_FULLRES=6
 
-WIDTH=${streams_stream_0_coded_width:=0}
 
-if [[ $WIDTH -eq 0 ]]; then
-	WIDTH=${streams_stream_1_coded_width}
-fi
+# use first video stream as *the* stream and use that's (:) width
+NUM_STREAMS=${format_nb_streams}
+i=0
+while [ $i -le $NUM_STREAMS ]; do
+  tmp="streams_stream_${i}_codec_type"
+  tv=${!tmp}
+  if [ "$tv" = "video" ]; then
+    #    streams_stream_3   _coded_width=1280
+    # ?? coded vs. codec?
+    tmp="streams_stream_${i}_width"
+    tv=${!tmp}
+    if [[ "X$tv" != "X" && "$tv" -gt 0 ]]; then
+      WIDTH=$tv
+      break
+    fi
+  fi
+  i=$(( $i + 1 ))
+
+done
 
 # 4k looks to small to see, double it up
 if [[ $WIDTH -gt 1920 ]]; then
