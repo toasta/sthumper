@@ -33,7 +33,7 @@ ffprobe -print_format flat=sep_char=_ -show_format -show_streams -loglevel quiet
 
 if [ "${format_duration}" = "N/A" -o "X${format_duration}" = "X" ]; then
   echo "returned length is (${format_duration}); re(encoding) file to get correct length"
-  UU2="$SRC.mkv"
+  UU2="$UU-recode.${UU##*.}"
   ffmpeg -i "${UU}" -acodec copy -vcodec copy -map_metadata -1  "${UU2}"
   # just get the duration and leave other metadata intact.
   # we seem to have  to strip the old metadata completely
@@ -92,6 +92,11 @@ while [ $i -le $NUM_STREAMS ]; do
   i=$(( $i + 1 ))
 
 done
+
+if [ "X{$WIDTH}" = "X" ]; then
+  echo "no useable video stream with a width set found; skipping this file"
+  exit
+fi
 
 # 4k looks to small to see, double it up
 if [[ $WIDTH -gt 1920 ]]; then
