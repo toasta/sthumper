@@ -31,6 +31,21 @@ UU=$SRC
 ffprobe -print_format flat=sep_char=_ -show_format -show_streams -loglevel quiet "$UU" > "$NFO"
 . $NFO
 
+if [ "${format_duration}" = "N/A" -o "X${format_duration}" = "X" ]; then
+  echo "returned length is (${format_duration}); re(encoding) file to get correct length"
+  UU2="$SRC.mkv"
+  ffmpeg -i /mnt/a/rethumb/a.mkv -acodec copy -vcodec copy -map_metadata -1  "${UU2}"
+  # just get the duration and leave other metadata intact.
+  # we seem to have  to strip the old metadata completely
+  # https://superuser.com/questions/650291/how-to-get-video-duration-in-seconds
+
+  ffprobe -print_format flat=sep_char=_ -show_format -show_streams -loglevel quiet "$UU" | grep "^format_duration" > "${NFO}_"
+  . "${NFO}_"
+  rm -f "$UU2" "${NFO}_"
+  echo "returned length is now (${format_duration})"
+fi
+
+
 FF="echo ffmpeg -loglevel quiet"
 FF="ffmpeg -loglevel quiet"
 #FF="ffmpeg "
