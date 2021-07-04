@@ -41,6 +41,10 @@ if [ "${format_duration}" = "N/A" -o "X${format_duration}" = "X" ]; then
 
   ffprobe -print_format flat=sep_char=_ -show_format -show_streams -loglevel quiet "$UU2" | grep "^format_duration" > "${NFO}_"
   . "${NFO}_"
+	if [ "${format_duration}" = "N/A" -o "X${format_duration}" = "X" ]; then
+		echo "even after recoding/reparsing no length found. bailing out"
+		exit;
+	fi
   # if the file was so broken, maybe it's better to use the reparsed file?
   if [ 1 -eq 1 ]; then
     mv "$UU2" "$UU"
