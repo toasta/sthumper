@@ -197,9 +197,9 @@ if [ $this_height -ge 16384 ]; then
 	echo "Image would be $this_height ($INC / $besides * $HEIGHT/$besides_scale) high; chosing to fit in 16k limits (for webp)"
 	# desired height
 	SPACE_LEFT=$(( 16384 - $FULLS_HEIGHT_HEIGHT ))
-	echo "SPAC ELEFT $SPACE_LEFT"
+	#echo "SPAC ELEFT $SPACE_LEFT"
 	INC=$(( $SPACE_LEFT / ($HEIGHT*$besides_scale) ))
-	echo "$INC images w/ height $HEIGHT possible => $(( $INC * $HEIGHT ))"
+	#echo "$INC images w/ height $HEIGHT possible => $(( $INC * $HEIGHT ))"
 	# dunno why -1... maybe line 0 already has 960 height?
 	INC=$(( ($INC-1) * $besides ))
 fi
