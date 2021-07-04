@@ -28,13 +28,13 @@ TILE_MIN_WIDTH=300
 
 UU=$SRC
 
-ffprobe -print_format flat=sep_char=_ -show_format -show_streams -loglevel quiet "$UU" > "$NFO"
+ffprobe -nostdin - -print_format flat=sep_char=_ -show_format -show_streams -loglevel quiet "$UU" < /dev/null > "$NFO" 
 . $NFO
 
 if [ "${format_duration}" = "N/A" -o "X${format_duration}" = "X" ]; then
   echo "returned length is (${format_duration}); re(encoding) file to get correct length"
   UU2="$UU-recode.${UU##*.}"
-  ffmpeg -nostdin -i "${UU}" -acodec copy -vcodec copy -map_metadata -1  "${UU2}"
+  ffmpeg -nostdin -i "${UU}" -acodec copy -vcodec copy -map_metadata -1  "${UU2}" < /dev/null
   # just get the duration and leave other metadata intact.
   # we seem to have  to strip the old metadata completely
   # https://superuser.com/questions/650291/how-to-get-video-duration-in-seconds
@@ -145,7 +145,7 @@ if [ $DO_FULLRES -eq 1 ]; then
 	  OFN=$( printf "fullres-%06d.tif" $i )
 	  OF="${D}/$OFN"
 	  OUT2=$( printf "$OUT-%06d.webp" $i )
-	  ${FF} -noaccurate_seek -ss "${i}" -i "$UU" -frames:v 1 $OF 
+	  ${FF} -noaccurate_seek -ss "${i}" -i "$UU" -frames:v 1 $OF  < /dev/null
 	  if [ ! -s $OF ]; then
 	    cp $LASTF $OF
 	  fi
@@ -218,7 +218,7 @@ while [[ $j -lt $NUM ]]; do
     sec=$(( ($LEN_SECONDS / $NUM) * $j ))
 	  OF=$( printf "$D/tn-%06d.tif" $j )
 	  ${FF} -noaccurate_seek -ss "${sec}" -i "$UU" -frames:v 1 \
-		-vf scale=iw/$besides_scale:ih/$besides_scale $OF 
+		-vf scale=iw/$besides_scale:ih/$besides_scale $OF < /dev/null
     # maybe corrupt somewhere in the middle, use last image.
     # FIXME - what at image 0?
     if [ ! -s $OF ]; then
