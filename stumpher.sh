@@ -93,7 +93,8 @@ while [ $i -le $NUM_STREAMS ]; do
 
 done
 
-if [ "X{$WIDTH}" = "X" ]; then
+
+if [ "X${WIDTH}" = "X" ]; then
   echo "no useable video stream with a width set found; skipping this file"
   exit
 fi
