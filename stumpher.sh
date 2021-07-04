@@ -39,7 +39,7 @@ if [ "${format_duration}" = "N/A" -o "X${format_duration}" = "X" ]; then
   # we seem to have  to strip the old metadata completely
   # https://superuser.com/questions/650291/how-to-get-video-duration-in-seconds
 
-  ffprobe -print_format flat=sep_char=_ -show_format -show_streams -loglevel quiet "$UU" | grep "^format_duration" > "${NFO}_"
+  ffprobe -print_format flat=sep_char=_ -show_format -show_streams -loglevel quiet "$UU2" | grep "^format_duration" > "${NFO}_"
   . "${NFO}_"
   rm -f "$UU2" "${NFO}_"
   echo "returned length is now (${format_duration})"
