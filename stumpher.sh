@@ -9,16 +9,19 @@ OUT=$2
 tmp=$3
 LOCAL=${tmp:=0}
 
-if [ $LOCAL != "0" ]; then
-	DDD=/dev/shm/sthumph/
-	mkdir -p $DDD
-	D=$(mktemp -d -p $DDD)
-else
-D=$(mktemp -d)
-fi
+START=$(date +%s )
 
+#if [ $LOCAL != "0" ]; then
+#	DDD=/dev/shm/sthumph/
+#	mkdir -p $DDD
+#	D=$(mktemp -d -p $DDD)
+#else
+  D=$(mktemp -d)
+#fi
+##D=.
+#
 NFO="$D/ffprobe-output"
-
+#
 if [ -s $OUT ]; then
   echo "refusing to clobber '$OUT'"
   exit 1
@@ -70,6 +73,7 @@ fi
 
 FF="echo ffmpeg -loglevel quiet"
 FF="ffmpeg -loglevel quiet -nostdin"
+#FF="ffmpeg -nostdin"
 #FF="ffmpeg "
 
 
@@ -117,6 +121,7 @@ besides=$(( $WIDTH / $TILE_MIN_WIDTH ))
 besides_scale=$besides
 
 TILE_SIZE=$(( $WIDTH / $besides ))
+TILE_HEIGHT=$(( $HEIGHT / $besides ))
 
 DO_FULLRES=1
 
@@ -125,160 +130,121 @@ if [[ $WIDTH -lt $((1920/2)) ]]; then
 	TILE_SIZE=$WIDTH
 	besides=$(((1920-0)/$WIDTH))
 	besides_scale=1
+  TILE_HEIGHT=$(( $HEIGHT / $besides ))
 fi
 
 
 printf "width(%4d), length(%4d), tilesize(%3d), filename(%s)\n" $WIDTH $LEN_SECONDS $TILE_SIZE $SRC
 
-CVSTRING="convert "
+LINES=$(( $LEN_SECONDS / (90) / $besides ))
 
-INC=$(( $LEN_SECONDS / $NUM_FULLRES ))
-if [[ $INC -le 0 ]]; then
-	INC=1
+if [ $LINES -le 1 ]; then
+  LINES=1
 fi
 
+if [ $LINES -gt 16 ]; then
+  LINES=16
+fi
 
-# FULLRES
-# #############################################33
+height=$(( ($DO_FULLRES * 2 * $HEIGHT) + $LINES * $TILE_HEIGHT ))
 
+while [ $height -ge 16384 ]; do
+  LINES=$(( $LINES - 1 ))
+  height=$(( ($DO_FULLRES * 2 * $HEIGHT) + $LINES * $TILE_HEIGHT ))
+done
+
+REAL_NUMBER_OF_IMAGES=$(( $LINES * $besides ))
+NUMIMAGES=$(( $REAL_NUMBER_OF_IMAGES * 150 / 100))
+if [ $NUMIMAGES -le 1 ]; then
+NUMIMAGES=1
+fi
+
+INC=$(( $LEN_SECONDS / $NUMIMAGES ))
+#echo "*** $LINES lines w/ $besides image besides *** for $LEN_SECONDS => one pic each $INC seconds"
+
+if [ $INC -le 1 ]; then
+INC=1
+fi
+
+#assume 25% for final convert
+pvcount=$(( $NUMIMAGES * 125 / 100 ))
+# fifo w/ mkfifo sucks
+FIFO="$D/pvprogress"
+cat /dev/null > $FIFO
+tail -f $FIFO | pv -s $pvcount -p -t -e --pidfile $D/pv.pid  > /dev/null &
+
+if [ 1 -eq 1 ]; then
+  j=$INC
+  while [[ $j -le $LEN_SECONDS ]]; do
+      OF=$( printf "$D/tn-%06d.jpg" $j )
+      ${FF} -noaccurate_seek -ss "$j" -i "$UU" -frames:v 1 \
+      $OF < /dev/null
+      j=$(( $j + $INC ))
+      echo >> $FIFO
+  done
+fi
+
+#howmany=$(( (100/$besides) * $besides ))
+# one line every 5 minutes?
+
+
+FLIST="$D/flist.txt"
+find $D -type f -iname "tn-*.jpg" -printf "%s %p\n" | \
+  sort -n -k 1,1 | tail -n $REAL_NUMBER_OF_IMAGES | cut -d" " -f 2- | sort \
+  > $FLIST
+
+export CVSTRING=""
 if [ $DO_FULLRES -eq 1 ]; then
-	i=$INC
-	co=0
-	LASTF=""
-	while [[ $i -lt $LEN_SECONDS ]]; do
-	  OFN=$( printf "fullres-%06d.tif" $i )
-	  OF="${D}/$OFN"
-	  OUT2=$( printf "$OUT-%06d.webp" $i )
-	  ${FF} -noaccurate_seek -ss "${i}" -i "$UU" -vf select="eq(pict_type\,I)" -frames:v 1 $OF  < /dev/null
-	  if [ ! -s $OF ]; then
-	    cp $LASTF $OF
-	  fi
-		if [ $LOCAL = "0" ]; then
-			convert "$OF" "$OUT2"
-		fi
-	  i=$(( $i + $INC ))
-	  if [[ $co -eq $(( $NUM_FULLRES * 1/4))  || $co -eq $(( $NUM_FULLRES * 3/4 ))  ]]; then
-		  if [[ $DO_FULLRES -eq 1 ]]; then
-		  CVSTRING="${CVSTRING} $OF"
-		  fi
-	  fi
-		co=$(( $co + 1 ))
-	  LASTF=$OUT2
-	done
-	CVSTRING="${CVSTRING} -append"
+  FULLRES1=$(( $REAL_NUMBER_OF_IMAGES * 1/4 ))
+  FULLRES2=$(( $REAL_NUMBER_OF_IMAGES * 3/4 ))
+  # no while read a, it's a subshell
+  # but maybe it does with export?
+  CVSTRING="$CVSTRING $(cat $FLIST | head -n $FULLRES1 | tail -n 1)"
+  CVSTRING="$CVSTRING $(cat $FLIST | head -n $FULLRES2 | tail -n 1)"
+  CVSTRING="$CVSTRING -append"
 fi
 
 
-# TILES
-# #############################################33
 
-INC=60
-INC=$(( ($LEN_SECONDS) / 60 ))
-#echo "images if one per 60s $INC"
-
-if [[ $INC -gt 100 ]]; then
-       INC=100
-fi
-
-
-# round this up to next multiple of $besides
-#echo "rounding up to fit besides $besides ==== $INC + $INC % $besides"
-INC=$(( $INC / ($besides *2) ))
-INC=$(( $INC + 1 ))
-INC=$(( $INC * $besides *2 ))
-
-# cope with webpS 16384 limit.
-# we even don't care if it's not webp
-
-FULLS_HEIGHT_HEIGHT=$(($HEIGHT * $NUM_FULLRES * $DO_FULLRES))
-
-this_height=$(( $FULLS_HEIGHT_HEIGHT + ($INC/$besides)*$HEIGHT/$besides_scale ))
-
-
-# NOTE, bash does not do floating....
-
-while [ $this_height -ge 16384 ]; do
-  INC=$(( $INC / ($besides *2) ))
-  INC=$(( $INC - 1 ))
-  INC=$(( $INC * $besides *2 ))
-  this_height=$(( $FULLS_HEIGHT_HEIGHT + ($INC/$besides)*$HEIGHT/$besides_scale ))
-  echo "new height: $this_height"
-done
-
-# this did not work, so bruteforce
-# if [ $this_height -ge 16384 ]; then
-# 	echo "Image would be $this_height ($INC / $besides * $HEIGHT/$besides_scale) high; chosing to fit in 16k limits (for webp)"
-# 	# desired height
-# 	SPACE_LEFT=$(( 16384 - $FULLS_HEIGHT_HEIGHT ))
-# 	#echo "SPAC ELEFT $SPACE_LEFT"
-# 	INC=$(( $SPACE_LEFT / ($HEIGHT*$besides_scale) ))
-# 	#echo "$INC images w/ height $HEIGHT possible => $(( $INC * $HEIGHT ))"
-# 	# dunno why -1... maybe line 0 already has 960 height?
-# 	INC=$(( ($INC-1) * $besides ))
-# fi
-
-NUM=$INC
-
-thumbs=()
 j=0
-
-
-
-while [[ $j -lt $NUM ]]; do
-  #echo -n " $(( 100 * $j / $NUM ))%"
-
-    # if the video is less than say 6 seconds for 6 besides, this needs
-    # to overwrite the image
-    sec=$(( ($LEN_SECONDS / $NUM) * $j ))
-	  OF=$( printf "$D/tn-%06d.tif" $j )
-	  ${FF} -noaccurate_seek -ss "${sec}" -i "$UU" -vf select="eq(pict_type\,I)" -frames:v 1 \
-		-vf scale=iw/$besides_scale:ih/$besides_scale $OF < /dev/null
-    # maybe corrupt somewhere in the middle, use last image.
-    # FIXME - what at image 0?
-    if [ ! -s $OF ]; then
-      cp $( printf "$D/tn-%06d.tif" $(( $j - 1 )) ) "$OF"
-    fi
-	  S2=$sec
-	  H=0
-	  M=0
-	  S=0
-	  H=$(( $S2 / 3600 ))
-	  S2=$(( $S2 - ($H * 3600 ) ))
-	  M=$(( $S2 / 60 ))
-	  S2=$(( $S2 - ($M * 60 ) ))
-	  S=$(( $S2 ))
-	  LAB=$( printf "%02d:%02d:%02d" $H $M $S )
-	  OF=$( printf "\n\t( ( -background #00000080 -fill white -font /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf label:%s ) -gravity southeast %s +swap -composite )\n" $LAB $OF )
-      thumbs+=("$OF")
-      j=$(( $j + 1 ))
-
-done
-
-
-# TILES
-##############################################33
-j=0
-for i in "${thumbs[@]}"
-do
-    #echo "\n\n****j($j) besides($besides) i($i)****\n"
-	if [ $(($j % $besides)) -eq 0 ]; then
-		CVSTRING="${CVSTRING} ("$'\n'
+export CV=" "
+export TMP=""
+for a in $(< $FLIST); do
+  #echo "**** $a"
+  # begins a line?
+	if [ $j -gt 0 -a $(($j % $besides)) -eq 0 ]; then
+    CV="$CV ( $TMP ) -append"
+    TMP=""
 	fi
-
-    CVSTRING="${CVSTRING} $i"$'\n'
-
-
-    #check if this image concludes a line
-    # this is the same as $j % $besides == (besides - 1)
-    j=$(( $j + 1 ))
-	  #if [[ $(( ($j+1) % $besides)) -eq 0 ]]; then
-	  if [[ $(( ($j) % $besides)) -eq 0 ]]; then
-		  CVSTRING="${CVSTRING} +append ) -append"$'\n'
-	  fi
+  S2=$( echo "$a" | perl -pe 's/.*?0*(\d+)\..*/$1/' )
+  M=0
+  S=0
+  H=$(( $S2 / 3600 ))
+  S2=$(( $S2 - ($H * 3600 ) ))
+  M=$(( $S2 / 60 ))
+  S2=$(( $S2 - ($M * 60 ) ))
+  S=$(( $S2 ))
+  LAB=$( printf "%02d:%02d:%02d" $H $M $S )
+  #OF="( ( -background #00000080 -fill white -font /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf label:$LAB ) -gravity southeast $a +swap -composite ) +append"
+  OF="( ( $a -resize ${TILE_SIZE}x ) ( -background #00000080 -fill white -font /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf label:$LAB ) -gravity southeast  -composite ) +append"
+  export TMP="$TMP $OF"
+  j=$(( $j + 1 ))
 done
+if [ "X$TMP" != "X" ]; then
+  CV="$CV ( $TMP ) -append"
+fi
 
-#echo $CVSTRING
 
-$CVSTRING "$OUT"
+#set -x
+convert $CVSTRING $CV  $OUT
+#set +x
 
-rm -r "$D"
+#$CVSTRING "$OUT"
+
+
+END=$(date +%s )
+#echo "took $(( $END - $START )) seconds"
+kill $(< $D/pv.pid)
+#echo "TMPDIR is $D"
+rm -fr "$D"
+echo
