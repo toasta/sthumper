@@ -146,7 +146,7 @@ if [ $DO_FULLRES -eq 1 ]; then
 	co=0
 	LASTF=""
 	while [[ $i -lt $LEN_SECONDS ]]; do
-	  OFN=$( printf "fullres-%06d.tif" $i )
+	  OFN=$( printf "fullres-%06d.miff" $i )
 	  OF="${D}/$OFN"
 	  OUT2=$( printf "$OUT-%06d.webp" $i )
 	  ${FF} -noaccurate_seek -ss "${i}" -i "$UU" -frames:v 1 $OF  < /dev/null
@@ -220,13 +220,13 @@ while [[ $j -lt $NUM ]]; do
     # if the video is less than say 6 seconds for 6 besides, this needs
     # to overwrite the image
     sec=$(( ($LEN_SECONDS / $NUM) * $j ))
-	  OF=$( printf "$D/tn-%06d.tif" $j )
+	  OF=$( printf "$D/tn-%06d.miff" $j )
 	  ${FF} -noaccurate_seek -ss "${sec}" -i "$UU" -frames:v 1 \
 		-vf scale=iw/$besides_scale:ih/$besides_scale $OF < /dev/null
     # maybe corrupt somewhere in the middle, use last image.
     # FIXME - what at image 0?
     if [ ! -s $OF ]; then
-      cp $( printf "$D/tn-%06d.tif" $(( $j - 1 )) ) "$OF"
+      cp $( printf "$D/tn-%06d.miff" $(( $j - 1 )) ) "$OF"
     fi
 	  S2=$sec
 	  H=0
