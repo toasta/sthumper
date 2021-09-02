@@ -146,10 +146,10 @@ if [ $DO_FULLRES -eq 1 ]; then
 	co=0
 	LASTF=""
 	while [[ $i -lt $LEN_SECONDS ]]; do
-	  OFN=$( printf "fullres-%06d.miff" $i )
+	  OFN=$( printf "fullres-%06d.tif" $i )
 	  OF="${D}/$OFN"
 	  OUT2=$( printf "$OUT-%06d.webp" $i )
-	  ${FF} -noaccurate_seek -ss "${i}" -i "$UU" -frames:v 1 $OF  < /dev/null
+	  ${FF} -noaccurate_seek -ss "${i}" -i "$UU" -vf select="eq(pict_type\,I)" -frames:v 1 $OF  < /dev/null
 	  if [ ! -s $OF ]; then
 	    cp $LASTF $OF
 	  fi
@@ -197,21 +197,31 @@ this_height=$(( $FULLS_HEIGHT_HEIGHT + ($INC/$besides)*$HEIGHT/$besides_scale ))
 
 # NOTE, bash does not do floating....
 
-if [ $this_height -ge 16384 ]; then
-	echo "Image would be $this_height ($INC / $besides * $HEIGHT/$besides_scale) high; chosing to fit in 16k limits (for webp)"
-	# desired height
-	SPACE_LEFT=$(( 16384 - $FULLS_HEIGHT_HEIGHT ))
-	#echo "SPAC ELEFT $SPACE_LEFT"
-	INC=$(( $SPACE_LEFT / ($HEIGHT*$besides_scale) ))
-	#echo "$INC images w/ height $HEIGHT possible => $(( $INC * $HEIGHT ))"
-	# dunno why -1... maybe line 0 already has 960 height?
-	INC=$(( ($INC-1) * $besides ))
-fi
+while [ $this_height -ge 16384 ]; do
+  INC=$(( $INC / ($besides *2) ))
+  INC=$(( $INC - 1 ))
+  INC=$(( $INC * $besides *2 ))
+  this_height=$(( $FULLS_HEIGHT_HEIGHT + ($INC/$besides)*$HEIGHT/$besides_scale ))
+  echo "new height: $this_height"
+done
+
+# this did not work, so bruteforce
+# if [ $this_height -ge 16384 ]; then
+# 	echo "Image would be $this_height ($INC / $besides * $HEIGHT/$besides_scale) high; chosing to fit in 16k limits (for webp)"
+# 	# desired height
+# 	SPACE_LEFT=$(( 16384 - $FULLS_HEIGHT_HEIGHT ))
+# 	#echo "SPAC ELEFT $SPACE_LEFT"
+# 	INC=$(( $SPACE_LEFT / ($HEIGHT*$besides_scale) ))
+# 	#echo "$INC images w/ height $HEIGHT possible => $(( $INC * $HEIGHT ))"
+# 	# dunno why -1... maybe line 0 already has 960 height?
+# 	INC=$(( ($INC-1) * $besides ))
+# fi
 
 NUM=$INC
 
 thumbs=()
 j=0
+
 
 
 while [[ $j -lt $NUM ]]; do
@@ -220,13 +230,13 @@ while [[ $j -lt $NUM ]]; do
     # if the video is less than say 6 seconds for 6 besides, this needs
     # to overwrite the image
     sec=$(( ($LEN_SECONDS / $NUM) * $j ))
-	  OF=$( printf "$D/tn-%06d.miff" $j )
-	  ${FF} -noaccurate_seek -ss "${sec}" -i "$UU" -frames:v 1 \
+	  OF=$( printf "$D/tn-%06d.tif" $j )
+	  ${FF} -noaccurate_seek -ss "${sec}" -i "$UU" -vf select="eq(pict_type\,I)" -frames:v 1 \
 		-vf scale=iw/$besides_scale:ih/$besides_scale $OF < /dev/null
     # maybe corrupt somewhere in the middle, use last image.
     # FIXME - what at image 0?
     if [ ! -s $OF ]; then
-      cp $( printf "$D/tn-%06d.miff" $(( $j - 1 )) ) "$OF"
+      cp $( printf "$D/tn-%06d.tif" $(( $j - 1 )) ) "$OF"
     fi
 	  S2=$sec
 	  H=0
