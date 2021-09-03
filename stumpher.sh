@@ -1,8 +1,8 @@
 #! /bin/bash
 
-#set -euxo pipefail
-#set -euo pipefail
-#set -x
+TILE_MIN_WIDTH=300
+ONE_PIC_EVERY=70
+
 
 SRC=$1
 OUT=$2
@@ -27,7 +27,6 @@ if [ -s $OUT ]; then
   exit 1
 fi
 
-TILE_MIN_WIDTH=300
 
 UU=$SRC
 
@@ -136,7 +135,7 @@ fi
 
 printf "width(%4d), length(%4d), tilesize(%3d), filename(%s)\n" $WIDTH $LEN_SECONDS $TILE_SIZE $SRC
 
-LINES=$(( $LEN_SECONDS / (90) / $besides ))
+LINES=$(( $LEN_SECONDS / ($ONE_PIC_EVERY) / $besides ))
 
 if [ $LINES -le 1 ]; then
   LINES=1
