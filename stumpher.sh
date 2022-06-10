@@ -3,6 +3,7 @@
 TILE_MIN_WIDTH=300
 ONE_PIC_EVERY=70
 
+FULLRES_FIRST=0
 
 SRC=$1
 OUT=$2
@@ -27,16 +28,19 @@ if [ -s $OUT ]; then
   exit 1
 fi
 
+export CVSTRING=""
 
 UU=$SRC
 
-ffprobe -print_format flat=sep_char=_ -show_format -show_streams -loglevel quiet "$UU" < /dev/null > "$NFO" 
+ffprobe -print_format flat=sep_char=_ -show_format \
+  -show_streams -loglevel quiet "$UU" < /dev/null > "$NFO" 
 . $NFO
 
 if [ "${format_duration}" = "N/A" -o "X${format_duration}" = "X" ]; then
   echo "returned length is (${format_duration}); re(encoding) file to get correct length"
   UU2="$UU-recode.${UU##*.}"
-  ffmpeg -nostdin -i "${UU}" -acodec copy -vcodec copy -map_metadata -1  "${UU2}" < /dev/null
+  ffmpeg -nostdin -i "${UU}" -acodec copy -vcodec copy \
+    -map_metadata -1  "${UU2}" < /dev/null
   # just get the duration and leave other metadata intact.
   # we seem to have  to strip the old metadata completely
   # https://superuser.com/questions/650291/how-to-get-video-duration-in-seconds
@@ -192,18 +196,22 @@ find $D -type f -iname "tn-*.jpg" -printf "%s %p\n" | \
   sort -n -k 1,1 | tail -n $REAL_NUMBER_OF_IMAGES | cut -d" " -f 2- | sort \
   > $FLIST
 
-export CVSTRING=""
-if [ $DO_FULLRES -eq 1 ]; then
-  FULLRES1=$(( $REAL_NUMBER_OF_IMAGES * 1/4 ))
-  FULLRES2=$(( $REAL_NUMBER_OF_IMAGES * 3/4 ))
-  # no while read a, it's a subshell
-  # but maybe it does with export?
-  CVSTRING="$CVSTRING $(cat $FLIST | head -n $FULLRES1 | tail -n 1)"
-  CVSTRING="$CVSTRING $(cat $FLIST | head -n $FULLRES2 | tail -n 1)"
-  CVSTRING="$CVSTRING -append"
+
+function fullres {
+  if [ $DO_FULLRES -eq 1 ]; then
+    FULLRES1=$(( $REAL_NUMBER_OF_IMAGES * 1/4 ))
+    FULLRES2=$(( $REAL_NUMBER_OF_IMAGES * 3/4 ))
+    # no while read a, it's a subshell
+    # but maybe it does with export?
+    CV="$CV $(cat $FLIST | head -n $FULLRES1 | tail -n 1)"
+    CV="$CV $(cat $FLIST | head -n $FULLRES2 | tail -n 1)"
+    CV="$CV -append"
+  fi
+}
+
+if [[ $FULLRES_FIRST -gt 0 ]]; then
+  fullres
 fi
-
-
 
 j=0
 export CV=" "
@@ -233,6 +241,9 @@ if [ "X$TMP" != "X" ]; then
   CV="$CV ( $TMP ) -append"
 fi
 
+if [[ $FULLRES_FIRST -le 0 ]]; then
+  fullres
+fi
 
 #set -x
 convert $CVSTRING $CV  $OUT
